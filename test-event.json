@@ -1,0 +1,12 @@
+﻿{
+  "body": "{\"fileName\":\"test.pdf\",\"fileType\":\"pdf\",\"fileSize\":1024,\"vertical\":\"healthcare\"}",
+  "requestContext": {
+    "authorizer": {
+      "claims": {
+        "sub": "test-user-123",
+        "email": "admin@documentia.com",
+        "cognito:username": "admin@documentia.com"
+      }
+    }
+  }
+}
