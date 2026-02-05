@@ -5,6 +5,7 @@
 
 import React, { useState, useRef } from 'react';
 import { validateFile } from '../utils/fileValidation';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface DocumentUploaderProps {
   onFileSelect: (file: File) => void;
@@ -17,6 +18,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   disabled = false,
   accept = '.pdf,.docx,.txt',
 }) => {
+  const { t } = useLanguage();
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,14 +114,14 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
           <div className="text-6xl">📄</div>
           <div>
             <p className="text-lg font-medium text-gray-dark mb-1">
-              {isDragging ? 'Drop your file here' : 'Drag and drop your file here'}
+              {isDragging ? t('uploader.dropHere') : t('uploader.dragDrop')}
             </p>
-            <p className="text-sm text-gray">or click to browse</p>
+            <p className="text-sm text-gray">{t('uploader.orClick')}</p>
           </div>
           <div className="text-xs text-gray">
-            <p>Supported formats: PDF, DOCX, TXT</p>
-            <p>Maximum size: 10MB</p>
-            <p>Maximum PDF pages: 100</p>
+            <p>{t('uploader.supportedFormats')}</p>
+            <p>{t('uploader.maxSize')}</p>
+            <p>{t('uploader.maxPages')}</p>
           </div>
         </div>
       </div>

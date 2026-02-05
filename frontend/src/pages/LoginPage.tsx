@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Alert } from '../components/Alert'
@@ -8,6 +9,7 @@ import { Alert } from '../components/Alert'
 export const LoginPage = () => {
   const navigate = useNavigate()
   const { login, error, clearError } = useAuth()
+  const { t } = useLanguage()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,15 +20,15 @@ export const LoginPage = () => {
     const errors: { email?: string; password?: string } = {}
 
     if (!email) {
-      errors.email = 'Email is required'
+      errors.email = t('login.emailRequired')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = 'Invalid email format'
+      errors.email = t('login.emailInvalid')
     }
 
     if (!password) {
-      errors.password = 'Password is required'
+      errors.password = t('login.passwordRequired')
     } else if (password.length < 8) {
-      errors.password = 'Password must be at least 8 characters'
+      errors.password = t('login.passwordMin')
     }
 
     setValidationErrors(errors)
@@ -59,13 +61,13 @@ export const LoginPage = () => {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Document Analysis
+            {t('login.appTitle')}
           </h1>
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            Sign in to your account
+            {t('login.subtitle')}
           </h2>
           <p className="text-gray-600">
-            AI-powered document insights with Amazon Bedrock
+            {t('login.appSubtitle')}
           </p>
         </div>
 
@@ -80,7 +82,7 @@ export const LoginPage = () => {
         <form className="mt-8 space-y-6 card" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
-              label="Email address"
+              label={t('login.email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -92,7 +94,7 @@ export const LoginPage = () => {
             />
 
             <Input
-              label="Password"
+              label={t('login.password')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -112,13 +114,13 @@ export const LoginPage = () => {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
+                {t('login.rememberMe')}
               </label>
             </div>
 
             <div className="text-sm">
               <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                Forgot password?
+                {t('login.forgotPassword')}
               </Link>
             </div>
           </div>
@@ -129,13 +131,13 @@ export const LoginPage = () => {
             isLoading={isLoading}
             disabled={isLoading}
           >
-            Sign in
+            {t('login.signIn')}
           </Button>
 
           <div className="text-center text-sm">
-            <span className="text-gray-600">Don't have an account? </span>
+            <span className="text-gray-600">{t('login.noAccount')} </span>
             <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Sign up
+              {t('login.register')}
             </Link>
           </div>
         </form>
