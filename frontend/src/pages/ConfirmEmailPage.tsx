@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AuthService } from '../services/authService'
+import { useLanguage } from '../contexts/LanguageContext'
 import { Button } from '../components/Button'
 import { Input } from '../components/Input'
 import { Alert } from '../components/Alert'
@@ -8,6 +9,7 @@ import { Alert } from '../components/Alert'
 export const ConfirmEmailPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   
   const emailFromState = (location.state as { email?: string })?.email || ''
   
@@ -70,8 +72,8 @@ export const ConfirmEmailPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="max-w-md w-full">
           <Alert variant="success">
-            <h3 className="font-semibold mb-2">Email Confirmed!</h3>
-            <p>Your email has been verified successfully. Redirecting to login...</p>
+            <h3 className="font-semibold mb-2">{t('confirm.success')}</h3>
+            <p>{t('confirm.successMessage')}</p>
           </Alert>
         </div>
       </div>
@@ -83,10 +85,10 @@ export const ConfirmEmailPage = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Confirm Your Email
+            {t('confirm.title')}
           </h1>
           <p className="text-gray-600">
-            Enter the verification code sent to your email
+            {t('confirm.subtitle')}
           </p>
         </div>
 
@@ -98,14 +100,14 @@ export const ConfirmEmailPage = () => {
 
         {resendSuccess && (
           <Alert variant="success">
-            Verification code resent successfully! Check your email.
+            {t('confirm.resendSuccess')}
           </Alert>
         )}
 
         <form className="mt-8 space-y-6 card" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <Input
-              label="Email address"
+              label={t('confirm.email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -116,11 +118,11 @@ export const ConfirmEmailPage = () => {
             />
 
             <Input
-              label="Verification Code"
+              label={t('confirm.code')}
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="123456"
+              placeholder={t('confirm.codePlaceholder')}
               required
               autoFocus
               maxLength={6}
@@ -133,7 +135,7 @@ export const ConfirmEmailPage = () => {
             isLoading={isLoading}
             disabled={isLoading || !email || !code}
           >
-            Confirm Email
+            {t('confirm.submit')}
           </Button>
 
           <div className="text-center space-y-2">
@@ -143,12 +145,12 @@ export const ConfirmEmailPage = () => {
               disabled={isResending || !email}
               className="text-sm text-blue-600 hover:text-blue-500 disabled:text-gray-400"
             >
-              {isResending ? 'Sending...' : "Didn't receive the code? Resend"}
+              {isResending ? t('confirm.sending') : t('confirm.resend')}
             </button>
             
             <div className="text-sm">
               <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Back to login
+                {t('confirm.backToLogin')}
               </Link>
             </div>
           </div>

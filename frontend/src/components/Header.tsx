@@ -119,13 +119,13 @@ export const Header: React.FC = () => {
                 to="/login"
                 className="px-4 py-2 text-gray-300 hover:bg-navy-dark hover:text-white rounded-lg transition-all"
               >
-                Login
+                {t('login.title')}
               </Link>
               <Link
                 to="/register"
                 className="px-4 py-2 bg-bright-blue hover:bg-turquoise text-white rounded-lg transition-all font-medium"
               >
-                Register
+                {t('register.title')}
               </Link>
             </div>
           )}

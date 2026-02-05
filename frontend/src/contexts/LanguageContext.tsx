@@ -239,6 +239,20 @@ const translations = {
     
     'home.footer.powered': 'Potenciado por',
     'home.footer.rights': 'Todos los derechos reservados.',
+    
+    // Confirm Email Page
+    'confirm.title': 'Confirma tu Correo',
+    'confirm.subtitle': 'Ingresa el código de verificación enviado a tu correo',
+    'confirm.email': 'Correo Electrónico',
+    'confirm.code': 'Código de Verificación',
+    'confirm.submit': 'Confirmar Correo',
+    'confirm.resend': '¿No recibiste el código? Reenviar',
+    'confirm.sending': 'Enviando...',
+    'confirm.backToLogin': 'Volver al inicio de sesión',
+    'confirm.success': '¡Correo Confirmado!',
+    'confirm.successMessage': 'Tu correo ha sido verificado exitosamente. Redirigiendo al inicio de sesión...',
+    'confirm.resendSuccess': '¡Código de verificación reenviado exitosamente! Revisa tu correo.',
+    'confirm.codePlaceholder': '123456',
   },
   en: {
     // Header
@@ -463,6 +477,20 @@ const translations = {
     
     'home.footer.powered': 'Powered by',
     'home.footer.rights': 'All rights reserved.',
+    
+    // Confirm Email Page
+    'confirm.title': 'Confirm Your Email',
+    'confirm.subtitle': 'Enter the verification code sent to your email',
+    'confirm.email': 'Email Address',
+    'confirm.code': 'Verification Code',
+    'confirm.submit': 'Confirm Email',
+    'confirm.resend': "Didn't receive the code? Resend",
+    'confirm.sending': 'Sending...',
+    'confirm.backToLogin': 'Back to login',
+    'confirm.success': 'Email Confirmed!',
+    'confirm.successMessage': 'Your email has been verified successfully. Redirecting to login...',
+    'confirm.resendSuccess': 'Verification code resent successfully! Check your email.',
+    'confirm.codePlaceholder': '123456',
   },
 };
 
