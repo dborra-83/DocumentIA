@@ -120,20 +120,28 @@ def list_documents(user_id: str, query_params: Dict[str, str], claims: Dict[str,
         date_to = query_params.get('dateTo')
         search = query_params.get('search', '').lower()
         
-        # Get user email from claims
+        # Get user email and groups from claims
         user_email = claims.get('email', user_id)
+        user_groups = claims.get('cognito:groups', [])
+        is_admin = 'Admins' in user_groups
         
-        logger.info(f"Listing documents for user {user_id}: page={page}, pageSize={page_size}, "
+        logger.info(f"Listing documents for user {user_id} (admin={is_admin}): page={page}, pageSize={page_size}, "
                    f"vertical={vertical}, dateFrom={date_from}, dateTo={date_to}, search={search}")
         
-        # Query DynamoDB using UserIdIndex GSI
-        # The GSI has userId as partition key and uploadedAt as sort key
-        query_kwargs = {
-            'IndexName': 'UserIdIndex',
-            'KeyConditionExpression': Key('userId').eq(user_id),
-            'ScanIndexForward': False,  # Sort descending (newest first)
-            'Limit': page_size * page  # Get enough items to support pagination
-        }
+        # If user is admin, scan all documents; otherwise query by userId
+        if is_admin:
+            # Admin: Scan all documents
+            query_kwargs = {
+                'Limit': page_size * page  # Get enough items to support pagination
+            }
+        else:
+            # Regular user: Query by userId using GSI
+            query_kwargs = {
+                'IndexName': 'UserIdIndex',
+                'KeyConditionExpression': Key('userId').eq(user_id),
+                'ScanIndexForward': False,  # Sort descending (newest first)
+                'Limit': page_size * page  # Get enough items to support pagination
+            }
         
         # Build filter expression
         filter_expressions = []
@@ -158,9 +166,16 @@ def list_documents(user_id: str, query_params: Dict[str, str], claims: Dict[str,
                 combined_filter = combined_filter & expr
             query_kwargs['FilterExpression'] = combined_filter
         
-        # Execute query
-        response = documents_table.query(**query_kwargs)
+        # Execute query or scan
+        if is_admin:
+            response = documents_table.scan(**query_kwargs)
+        else:
+            response = documents_table.query(**query_kwargs)
         items = response.get('Items', [])
+        
+        # Sort by uploadedAt descending for admin (scan doesn't sort)
+        if is_admin:
+            items = sorted(items, key=lambda x: x.get('uploadedAt', ''), reverse=True)
         
         # Calculate pagination
         start_index = (page - 1) * page_size
@@ -174,6 +189,13 @@ def list_documents(user_id: str, query_params: Dict[str, str], claims: Dict[str,
         # Format response
         documents = []
         for item in paginated_items:
+            # Get the actual user email for each document (for admin view)
+            doc_user_email = user_email
+            if is_admin and item.get('userId') != user_id:
+                # For admin viewing other users' documents, try to get their email
+                # In a real system, you might want to query Cognito or cache user emails
+                doc_user_email = item.get('userId')  # Fallback to userId
+            
             documents.append({
                 'documentId': item['documentId'],
                 'fileName': item['fileName'],
@@ -182,8 +204,8 @@ def list_documents(user_id: str, query_params: Dict[str, str], claims: Dict[str,
                 'vertical': item.get('vertical', ''),
                 'status': item.get('status', 'pending'),
                 'uploadedAt': item['uploadedAt'],
-                'userId': user_id,
-                'userEmail': user_email,  # Add user email
+                'userId': item.get('userId', user_id),
+                'userEmail': doc_user_email,
                 'processingTimeMs': int(item.get('processingTimeMs', 0)) if 'processingTimeMs' in item else None
             })
         
@@ -248,8 +270,12 @@ def get_document_by_id(user_id: str, document_id: str, claims: Dict[str, Any]) -
         
         document = doc_response['Item']
         
-        # Verify document belongs to user
-        if document.get('userId') != user_id:
+        # Get user groups from claims
+        user_groups = claims.get('cognito:groups', [])
+        is_admin = 'Admins' in user_groups
+        
+        # Verify document belongs to user (unless user is admin)
+        if not is_admin and document.get('userId') != user_id:
             logger.warning(f"User {user_id} attempted to access document {document_id} owned by {document.get('userId')}")
             return {
                 'statusCode': 403,

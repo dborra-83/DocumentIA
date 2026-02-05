@@ -195,6 +195,14 @@ export class CognitoUserPoolConstruct extends Construct {
       description: 'Provider URL of the Cognito User Pool',
     });
 
+    // Create Admins group
+    const adminsGroup = new cognito.CfnUserPoolGroup(this, 'AdminsGroup', {
+      userPoolId: this.userPool.userPoolId,
+      groupName: 'Admins',
+      description: 'Administrators with full access to all documents',
+      precedence: 1,
+    });
+
     // Add tags
     cdk.Tags.of(this.userPool).add('Purpose', 'Authentication');
     cdk.Tags.of(this.userPoolClient).add('Purpose', 'WebApplication');

@@ -36,10 +36,16 @@ export class AuthService {
           const accessToken = session.getAccessToken().getJwtToken()
           const refreshToken = session.getRefreshToken().getToken()
 
+          const payload = session.getIdToken().payload
+          const groups = payload['cognito:groups'] || []
+          const isAdmin = groups.includes('Admins')
+
           const user: User = {
-            id: session.getIdToken().payload.sub,
-            email: session.getIdToken().payload.email,
-            username: session.getIdToken().payload['cognito:username'],
+            id: payload.sub,
+            email: payload.email,
+            username: payload['cognito:username'],
+            groups,
+            isAdmin,
           }
 
           const tokens: AuthTokens = {
@@ -160,10 +166,16 @@ export class AuthService {
         const accessToken = session.getAccessToken().getJwtToken()
         const refreshToken = session.getRefreshToken().getToken()
 
+        const payload = session.getIdToken().payload
+        const groups = payload['cognito:groups'] || []
+        const isAdmin = groups.includes('Admins')
+
         const user: User = {
-          id: session.getIdToken().payload.sub,
-          email: session.getIdToken().payload.email,
-          username: session.getIdToken().payload['cognito:username'],
+          id: payload.sub,
+          email: payload.email,
+          username: payload['cognito:username'],
+          groups,
+          isAdmin,
         }
 
         const tokens: AuthTokens = {
@@ -207,10 +219,16 @@ export class AuthService {
           const accessToken = newSession.getAccessToken().getJwtToken()
           const newRefreshToken = newSession.getRefreshToken().getToken()
 
+          const payload = newSession.getIdToken().payload
+          const groups = payload['cognito:groups'] || []
+          const isAdmin = groups.includes('Admins')
+
           const user: User = {
-            id: newSession.getIdToken().payload.sub,
-            email: newSession.getIdToken().payload.email,
-            username: newSession.getIdToken().payload['cognito:username'],
+            id: payload.sub,
+            email: payload.email,
+            username: payload['cognito:username'],
+            groups,
+            isAdmin,
           }
 
           const tokens: AuthTokens = {
