@@ -2,7 +2,7 @@
  * Dashboard Page - Overview and statistics
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { StatsCard } from '../components/dashboard/StatsCard';

@@ -86,6 +86,7 @@ export interface DocumentWithAnalysis extends Document {
 export interface DocumentRecord {
   documentId: string;
   userId: string;
+  userEmail?: string;
   fileName: string;
   fileType: string;
   fileSize: number;

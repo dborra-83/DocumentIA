@@ -139,17 +139,6 @@ export const LoginPage = () => {
             </Link>
           </div>
         </form>
-
-        {/* Test Credentials Info */}
-        <div className="card bg-blue-50 border border-blue-200">
-          <p className="text-sm text-blue-800 font-medium mb-2">Test Credentials:</p>
-          <p className="text-sm text-blue-700">
-            Email: <code className="bg-blue-100 px-2 py-1 rounded">admin@documentia.com</code>
-          </p>
-          <p className="text-sm text-blue-700">
-            Password: <code className="bg-blue-100 px-2 py-1 rounded">Admin123!Pass</code>
-          </p>
-        </div>
       </div>
     </div>
   )

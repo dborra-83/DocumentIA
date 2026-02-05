@@ -27,6 +27,7 @@ export class IamRolesConstruct extends Construct {
   public readonly metricsAggregatorRole: iam.Role;
   public readonly exportHandlerRole: iam.Role;
   public readonly errorHandlerRole: iam.Role;
+  public readonly documentDeleteHandlerRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: IamRolesConstructProps) {
     super(scope, id);
@@ -148,6 +149,27 @@ export class IamRolesConstruct extends Construct {
     cdk.Tags.of(this.exportHandlerRole).add('Function', 'ExportHandler');
     cdk.Tags.of(this.exportHandlerRole).add('Component', 'Backend');
 
+    // DocumentDeleteHandler Role
+    // Permissions: DynamoDB DeleteItem, S3 DeleteObject
+    this.documentDeleteHandlerRole = new iam.Role(this, 'DocumentDeleteHandlerRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'Role for DocumentDeleteHandler Lambda - deletes documents and analysis results',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+    });
+
+    // Grant DynamoDB read and delete permissions
+    props.documentsTable.grantReadWriteData(this.documentDeleteHandlerRole);
+    props.resultsTable.grantReadWriteData(this.documentDeleteHandlerRole);
+
+    // Grant S3 DeleteObject permission
+    props.documentsBucket.grantDelete(this.documentDeleteHandlerRole);
+    props.resultsBucket.grantDelete(this.documentDeleteHandlerRole);
+
+    cdk.Tags.of(this.documentDeleteHandlerRole).add('Function', 'DocumentDeleteHandler');
+    cdk.Tags.of(this.documentDeleteHandlerRole).add('Component', 'Backend');
+
     // ErrorHandler Role
     // Permissions: DynamoDB UpdateItem (to update document status to failed)
     this.errorHandlerRole = new iam.Role(this, 'ErrorHandlerRole', {
@@ -168,37 +190,43 @@ export class IamRolesConstruct extends Construct {
     new cdk.CfnOutput(this, 'DocumentUploadHandlerRoleArn', {
       value: this.documentUploadHandlerRole.roleArn,
       description: 'ARN of DocumentUploadHandler IAM Role',
-      exportName: 'DocumentUploadHandlerRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-DocumentUploadHandlerRoleArn`,
     });
 
     new cdk.CfnOutput(this, 'BedrockProcessorRoleArn', {
       value: this.bedrockProcessorRole.roleArn,
       description: 'ARN of BedrockProcessor IAM Role',
-      exportName: 'BedrockProcessorRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-BedrockProcessorRoleArn`,
     });
 
     new cdk.CfnOutput(this, 'HistoryManagerRoleArn', {
       value: this.historyManagerRole.roleArn,
       description: 'ARN of HistoryManager IAM Role',
-      exportName: 'HistoryManagerRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-HistoryManagerRoleArn`,
     });
 
     new cdk.CfnOutput(this, 'MetricsAggregatorRoleArn', {
       value: this.metricsAggregatorRole.roleArn,
       description: 'ARN of MetricsAggregator IAM Role',
-      exportName: 'MetricsAggregatorRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-MetricsAggregatorRoleArn`,
     });
 
     new cdk.CfnOutput(this, 'ExportHandlerRoleArn', {
       value: this.exportHandlerRole.roleArn,
       description: 'ARN of ExportHandler IAM Role',
-      exportName: 'ExportHandlerRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-ExportHandlerRoleArn`,
+    });
+
+    new cdk.CfnOutput(this, 'DocumentDeleteHandlerRoleArn', {
+      value: this.documentDeleteHandlerRole.roleArn,
+      description: 'ARN of DocumentDeleteHandler IAM Role',
+      exportName: `${cdk.Stack.of(this).stackName}-DocumentDeleteHandlerRoleArn`,
     });
 
     new cdk.CfnOutput(this, 'ErrorHandlerRoleArn', {
       value: this.errorHandlerRole.roleArn,
       description: 'ARN of ErrorHandler IAM Role',
-      exportName: 'ErrorHandlerRoleArn',
+      exportName: `${cdk.Stack.of(this).stackName}-ErrorHandlerRoleArn`,
     });
   }
 }

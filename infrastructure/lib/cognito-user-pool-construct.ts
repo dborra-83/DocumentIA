@@ -144,12 +144,12 @@ export class CognitoUserPoolConstruct extends Construct {
           cognito.OAuthScope.OPENID,
           cognito.OAuthScope.PROFILE,
         ],
-        // Callback URLs will be configured when CloudFront domain is available
+        // Callback URLs - temporary placeholder for prod, will be updated with CloudFront URL
         callbackUrls: environment === 'prod' 
-          ? [] // Will be updated with production CloudFront URL
+          ? ['https://example.com/callback'] // Temporary placeholder, update after CloudFront deployment
           : ['http://localhost:3000/callback', 'http://localhost:5173/callback'], // Vite and CRA dev servers
         logoutUrls: environment === 'prod'
-          ? [] // Will be updated with production CloudFront URL
+          ? ['https://example.com/logout'] // Temporary placeholder, update after CloudFront deployment
           : ['http://localhost:3000/logout', 'http://localhost:5173/logout'],
       },
       

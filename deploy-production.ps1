@@ -99,6 +99,7 @@ if (!$SkipTests) {
     } finally {
         Pop-Location
     }
+    Write-Host ""
     
     # Frontend tests
     Write-Host "Running frontend tests..." -ForegroundColor Yellow
@@ -113,7 +114,6 @@ if (!$SkipTests) {
     } finally {
         Pop-Location
     }
-    
     Write-Host ""
 } else {
     Write-Host "Skipping tests..." -ForegroundColor Yellow

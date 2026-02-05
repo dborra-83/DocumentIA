@@ -21,6 +21,7 @@ export interface LambdaFunctionsConstructProps {
   metricsAggregatorRole: iam.IRole;
   exportHandlerRole: iam.IRole;
   errorHandlerRole: iam.IRole;
+  documentDeleteHandlerRole: iam.IRole;
   environment: string;
   bedrockModelId?: string;
   bedrockRegion?: string;
@@ -39,6 +40,7 @@ export class LambdaFunctionsConstruct extends Construct {
   public readonly exportHandlerFunction: lambda.Function;
   public readonly errorHandlerFunction: lambda.Function;
   public readonly stepFunctionsTriggerFunction: lambda.Function;
+  public readonly documentDeleteHandlerFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionsConstructProps) {
     super(scope, id);
@@ -164,6 +166,28 @@ export class LambdaFunctionsConstruct extends Construct {
     cdk.Tags.of(this.exportHandlerFunction).add('Function', 'ExportHandler');
     cdk.Tags.of(this.exportHandlerFunction).add('Component', 'Backend');
 
+    // DocumentDeleteHandler Lambda Function
+    // Deletes documents and associated data from S3 and DynamoDB
+    this.documentDeleteHandlerFunction = new lambda.Function(this, 'DocumentDeleteHandler', {
+      functionName: `DocumentDeleteHandler-${props.environment}`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: 'handler.lambda_handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/document-delete')),
+      role: props.documentDeleteHandlerRole,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        DOCUMENTS_BUCKET_NAME: props.documentsBucket.bucketName,
+        RESULTS_BUCKET_NAME: props.resultsBucket.bucketName,
+        DOCUMENTS_TABLE_NAME: props.documentsTable.tableName,
+        RESULTS_TABLE_NAME: props.resultsTable.tableName,
+      },
+      description: 'Deletes documents and associated analysis results',
+    });
+
+    cdk.Tags.of(this.documentDeleteHandlerFunction).add('Function', 'DocumentDeleteHandler');
+    cdk.Tags.of(this.documentDeleteHandlerFunction).add('Component', 'Backend');
+
     // ErrorHandler Lambda Function
     // Requirements: 15.2, 15.9
     this.errorHandlerFunction = new lambda.Function(this, 'ErrorHandler', {
@@ -239,6 +263,11 @@ export class LambdaFunctionsConstruct extends Construct {
     new cdk.CfnOutput(cdk.Stack.of(this), 'ExportHandlerFunctionArn', {
       value: this.exportHandlerFunction.functionArn,
       description: 'ARN of ExportHandler Lambda Function',
+    });
+
+    new cdk.CfnOutput(cdk.Stack.of(this), 'DocumentDeleteHandlerFunctionArn', {
+      value: this.documentDeleteHandlerFunction.functionArn,
+      description: 'ARN of DocumentDeleteHandler Lambda Function',
     });
 
     new cdk.CfnOutput(cdk.Stack.of(this), 'ErrorHandlerFunctionArn', {

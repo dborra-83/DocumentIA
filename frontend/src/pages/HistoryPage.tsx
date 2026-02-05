@@ -31,7 +31,7 @@ export default function HistoryPage() {
   };
 
   const loadDocumentAnalysis = async (documentId: string) => {
-    if (loadingAnalysis) return;
+    if (loadingAnalysis) return null;
 
     try {
       setLoadingAnalysis(true);
@@ -40,25 +40,22 @@ export default function HistoryPage() {
       // Map analysis to analysisResult for consistency
       const analysisData = response.analysis || response.analysisResult;
       
+      const updatedDoc = {
+        ...response,
+        analysisResult: analysisData
+      };
+      
       // Update the document in the list with the analysis
       setDocuments(prev => prev.map(doc => 
         doc.documentId === documentId 
-          ? { 
-              ...doc, 
-              analysisResult: analysisData
-            }
+          ? updatedDoc
           : doc
       ));
       
-      // Update selected doc if it's the one being viewed
-      if (selectedDoc?.documentId === documentId) {
-        setSelectedDoc({
-          ...response,
-          analysisResult: analysisData
-        });
-      }
+      return updatedDoc;
     } catch (err: any) {
       console.error(`Error loading analysis for ${documentId}:`, err);
+      return null;
     } finally {
       setLoadingAnalysis(false);
     }
@@ -90,18 +87,23 @@ export default function HistoryPage() {
     }
   };
 
-  const handleViewAnalysis = (doc: DocumentRecord) => {
-    // Ensure we have analysisResult populated from either analysis or analysisResult
-    const docWithAnalysis = {
-      ...doc,
-      analysisResult: doc.analysisResult || doc.analysis
-    };
-    
-    setSelectedDoc(docWithAnalysis);
-    
-    // Load analysis if not already loaded
+  const handleViewAnalysis = async (doc: DocumentRecord) => {
+    // Load analysis FIRST if not already loaded
     if (doc.status === 'completed' && !doc.analysisResult && !doc.analysis) {
-      loadDocumentAnalysis(doc.documentId);
+      const loadedDoc = await loadDocumentAnalysis(doc.documentId);
+      if (loadedDoc) {
+        setSelectedDoc(loadedDoc);
+      } else {
+        // If loading failed, still show modal with original doc
+        setSelectedDoc(doc);
+      }
+    } else {
+      // Analysis already loaded, just open modal
+      const docWithAnalysis = {
+        ...doc,
+        analysisResult: doc.analysisResult || doc.analysis
+      };
+      setSelectedDoc(docWithAnalysis);
     }
   };
 
@@ -275,12 +277,12 @@ export default function HistoryPage() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                           <span className="text-xs font-semibold text-white">
-                            {doc.userId ? doc.userId.substring(0, 2).toUpperCase() : 'U'}
+                            {doc.userEmail ? doc.userEmail.substring(0, 2).toUpperCase() : 'U'}
                           </span>
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900">
-                            {doc.userId || 'Usuario'}
+                            {doc.userEmail || doc.userId || 'Usuario'}
                           </div>
                         </div>
                       </div>

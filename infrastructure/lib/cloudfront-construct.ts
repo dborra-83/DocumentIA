@@ -136,9 +136,9 @@ export class CloudFrontConstruct extends Construct {
           }
         : {}),
 
-      // S3 origin for static assets
+      // S3 origin for static assets (using S3BucketOrigin for proper REST endpoint)
       defaultBehavior: {
-        origin: new origins.S3Origin(webHostingBucket, {
+        origin: origins.S3BucketOrigin.withOriginAccessIdentity(webHostingBucket, {
           originAccessIdentity: this.originAccessIdentity,
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -153,7 +153,7 @@ export class CloudFrontConstruct extends Construct {
       additionalBehaviors: {
         // Static assets (JS, CSS, images) - long cache
         '/assets/*': {
-          origin: new origins.S3Origin(webHostingBucket, {
+          origin: origins.S3BucketOrigin.withOriginAccessIdentity(webHostingBucket, {
             originAccessIdentity: this.originAccessIdentity,
           }),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -166,7 +166,7 @@ export class CloudFrontConstruct extends Construct {
         
         // Static files (fonts, icons) - long cache
         '/static/*': {
-          origin: new origins.S3Origin(webHostingBucket, {
+          origin: origins.S3BucketOrigin.withOriginAccessIdentity(webHostingBucket, {
             originAccessIdentity: this.originAccessIdentity,
           }),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -210,6 +210,7 @@ export class CloudFrontConstruct extends Construct {
               bucketName: `document-analysis-cloudfront-logs-${cdk.Stack.of(this).account}-${environment}`,
               encryption: s3.BucketEncryption.S3_MANAGED,
               blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+              objectOwnership: s3.ObjectOwnership.OBJECT_WRITER, // Required for CloudFront logging
               removalPolicy: cdk.RemovalPolicy.RETAIN,
               lifecycleRules: [
                 {

@@ -71,6 +71,7 @@ export class DocumentAnalysisStack extends cdk.Stack {
       metricsAggregatorRole: iamRoles.metricsAggregatorRole,
       exportHandlerRole: iamRoles.exportHandlerRole,
       errorHandlerRole: iamRoles.errorHandlerRole,
+      documentDeleteHandlerRole: iamRoles.documentDeleteHandlerRole,
       environment,
     });
 
@@ -95,6 +96,7 @@ export class DocumentAnalysisStack extends cdk.Stack {
       historyManager: lambdaFunctions.historyManagerFunction,
       metricsAggregator: lambdaFunctions.metricsAggregatorFunction,
       exportHandler: lambdaFunctions.exportHandlerFunction,
+      documentDeleteHandler: lambdaFunctions.documentDeleteHandlerFunction,
       environment,
     });
 

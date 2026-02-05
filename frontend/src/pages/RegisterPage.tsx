@@ -72,10 +72,10 @@ export const RegisterPage = () => {
     try {
       await register(email, password)
       setSuccess(true)
-      // Redirect to login after 3 seconds
+      // Redirect to confirmation page after 2 seconds
       setTimeout(() => {
-        navigate('/login')
-      }, 3000)
+        navigate('/confirm-email', { state: { email } })
+      }, 2000)
     } catch (err) {
       // Error is handled by context
       console.error('Registration error:', err)
@@ -91,13 +91,13 @@ export const RegisterPage = () => {
           <Alert variant="success">
             <h3 className="font-semibold mb-2">Registration Successful!</h3>
             <p>
-              Your account has been created. Please check your email for a verification link.
-              You will be redirected to the login page shortly.
+              Your account has been created. Please check your email for a verification code.
+              You will be redirected to the confirmation page shortly.
             </p>
           </Alert>
           <div className="mt-4 text-center">
-            <Link to="/login" className="text-blue-600 hover:text-blue-500">
-              Go to login now
+            <Link to="/confirm-email" state={{ email }} className="text-blue-600 hover:text-blue-500">
+              Go to confirmation now
             </Link>
           </div>
         </div>

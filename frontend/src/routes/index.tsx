@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
+import { ConfirmEmailPage } from '../pages/ConfirmEmailPage'
 import { AnalyzePage } from '../pages/AnalyzePage'
 import { DebugPage } from '../pages/DebugPage'
 import HistoryPage from '../pages/HistoryPage'
@@ -48,6 +49,10 @@ export const AppRoutes = () => {
       <Route 
         path="/register" 
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />} 
+      />
+      <Route 
+        path="/confirm-email" 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ConfirmEmailPage />} 
       />
 
       {/* Protected routes */}

@@ -14,6 +14,7 @@ export interface ApiGatewayConstructProps {
   historyManager: lambda.IFunction;
   metricsAggregator: lambda.IFunction;
   exportHandler: lambda.IFunction;
+  documentDeleteHandler: lambda.IFunction;
   environment: string;
 }
 
@@ -187,6 +188,55 @@ export class ApiGatewayConstruct extends Construct {
         requestParameters: {
           'method.request.path.documentId': true,
         },
+      }
+    );
+
+    // DELETE /documents/{documentId} - Delete document and analysis
+    documentByIdResource.addMethod(
+      'DELETE',
+      new apigateway.LambdaIntegration(props.documentDeleteHandler, {
+        proxy: true,
+        integrationResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': "'*'",
+            },
+          },
+        ],
+      }),
+      {
+        ...authorizedMethodOptions,
+        requestValidator: paramsValidator,
+        requestParameters: {
+          'method.request.path.documentId': true,
+        },
+        methodResponses: [
+          {
+            statusCode: '200',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+            },
+          },
+          {
+            statusCode: '404',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+            },
+          },
+          {
+            statusCode: '401',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+            },
+          },
+          {
+            statusCode: '500',
+            responseParameters: {
+              'method.response.header.Access-Control-Allow-Origin': true,
+            },
+          },
+        ],
       }
     );
 

@@ -82,11 +82,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if 'documentId' in path_parameters:
             # GET /documents/{documentId}
             document_id = path_parameters['documentId']
-            return get_document_by_id(user_id, document_id)
+            return get_document_by_id(user_id, document_id, claims)
         else:
             # GET /documents with query parameters
             query_params = event.get('queryStringParameters') or {}
-            return list_documents(user_id, query_params)
+            return list_documents(user_id, query_params, claims)
             
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
@@ -97,7 +97,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
 
-def list_documents(user_id: str, query_params: Dict[str, str]) -> Dict[str, Any]:
+def list_documents(user_id: str, query_params: Dict[str, str], claims: Dict[str, Any]) -> Dict[str, Any]:
     """
     List documents for a user with pagination and filters
     
@@ -119,6 +119,9 @@ def list_documents(user_id: str, query_params: Dict[str, str]) -> Dict[str, Any]
         date_from = query_params.get('dateFrom')
         date_to = query_params.get('dateTo')
         search = query_params.get('search', '').lower()
+        
+        # Get user email from claims
+        user_email = claims.get('email', user_id)
         
         logger.info(f"Listing documents for user {user_id}: page={page}, pageSize={page_size}, "
                    f"vertical={vertical}, dateFrom={date_from}, dateTo={date_to}, search={search}")
@@ -179,6 +182,8 @@ def list_documents(user_id: str, query_params: Dict[str, str]) -> Dict[str, Any]
                 'vertical': item.get('vertical', ''),
                 'status': item.get('status', 'pending'),
                 'uploadedAt': item['uploadedAt'],
+                'userId': user_id,
+                'userEmail': user_email,  # Add user email
                 'processingTimeMs': int(item.get('processingTimeMs', 0)) if 'processingTimeMs' in item else None
             })
         
@@ -216,7 +221,7 @@ def list_documents(user_id: str, query_params: Dict[str, str]) -> Dict[str, Any]
         }
 
 
-def get_document_by_id(user_id: str, document_id: str) -> Dict[str, Any]:
+def get_document_by_id(user_id: str, document_id: str, claims: Dict[str, Any]) -> Dict[str, Any]:
     """
     Get a single document by ID with its analysis results
     
@@ -224,6 +229,9 @@ def get_document_by_id(user_id: str, document_id: str) -> Dict[str, Any]:
     """
     try:
         logger.info(f"Getting document {document_id} for user {user_id}")
+        
+        # Get user email from claims
+        user_email = claims.get('email', user_id)
         
         # Get document from Documents table
         doc_response = documents_table.get_item(
@@ -258,10 +266,20 @@ def get_document_by_id(user_id: str, document_id: str) -> Dict[str, Any]:
                 )
                 if 'Item' in results_response:
                     result_item = results_response['Item']
+                    
+                    # Parse extractedData from JSON string
+                    extracted_data_str = result_item.get('extractedData', '{}')
+                    try:
+                        extracted_data = json.loads(extracted_data_str) if isinstance(extracted_data_str, str) else extracted_data_str
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse extractedData for document {document_id}")
+                        extracted_data = {}
+                    
                     analysis = {
                         'executiveSummary': result_item.get('executiveSummary', ''),
                         'keyPoints': result_item.get('keyPoints', []),
                         'nextSteps': result_item.get('nextSteps', []),
+                        'extractedData': extracted_data,  # Add extracted data
                         'analyzedAt': result_item.get('analyzedAt', ''),
                         'inputTokens': int(result_item.get('inputTokens', 0)),
                         'outputTokens': int(result_item.get('outputTokens', 0))
@@ -279,6 +297,8 @@ def get_document_by_id(user_id: str, document_id: str) -> Dict[str, Any]:
             'vertical': document.get('vertical', ''),
             'status': document.get('status', 'pending'),
             'uploadedAt': document['uploadedAt'],
+            'userId': user_id,
+            'userEmail': user_email,  # Add user email
             'processingTimeMs': int(document.get('processingTimeMs', 0)) if 'processingTimeMs' in document else None,
             'analysis': analysis
         }

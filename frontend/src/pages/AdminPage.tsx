@@ -13,7 +13,7 @@ export const AdminPage: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('branding');
   const [formData, setFormData] = useState(config);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [_logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(config.logoUrl);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
