@@ -156,6 +156,45 @@ const translations = {
     'common.back': 'Volver',
     'common.next': 'Siguiente',
     'common.previous': 'Anterior',
+    
+    // Home Page
+    'home.hero.title': 'Análisis Inteligente de Documentos con IA',
+    'home.hero.subtitle': 'Procesa y analiza tus documentos de forma segura con inteligencia artificial de Amazon Bedrock. Tu información permanece privada en tu entorno AWS.',
+    'home.hero.cta': 'Comenzar Ahora',
+    'home.hero.login': 'Iniciar Sesión',
+    
+    'home.features.ai.title': 'Potenciado por IA',
+    'home.features.ai.description': 'Utiliza Amazon Bedrock con Claude 3 para análisis profundo de documentos, extracción de datos y generación de insights.',
+    'home.features.security.title': 'Máxima Seguridad',
+    'home.features.security.description': 'Tus documentos nunca salen de tu infraestructura AWS. Autenticación con Cognito y encriptación en reposo y tránsito.',
+    'home.features.private.title': 'Entorno Privado',
+    'home.features.private.description': 'Infraestructura dedicada en tu cuenta AWS. Control total sobre tus datos sin compartir con terceros.',
+    
+    'home.howItWorks.title': '¿Cómo Funciona?',
+    'home.howItWorks.step1.title': 'Sube tu Documento',
+    'home.howItWorks.step1.description': 'Carga archivos PDF, DOCX o TXT de forma segura',
+    'home.howItWorks.step2.title': 'Selecciona el Tipo',
+    'home.howItWorks.step2.description': 'Elige la industria para análisis especializado',
+    'home.howItWorks.step3.title': 'IA Procesa',
+    'home.howItWorks.step3.description': 'Amazon Bedrock analiza y extrae información',
+    'home.howItWorks.step4.title': 'Obtén Resultados',
+    'home.howItWorks.step4.description': 'Recibe resumen, puntos clave y datos extraídos',
+    
+    'home.security.title': 'Seguridad y Privacidad Garantizadas',
+    'home.security.subtitle': 'Tu información está protegida con los más altos estándares de seguridad de AWS',
+    'home.security.feature1.title': 'Datos Privados',
+    'home.security.feature1.description': 'Tus documentos permanecen en tu cuenta AWS, nunca se comparten',
+    'home.security.feature2.title': 'Infraestructura AWS',
+    'home.security.feature2.description': 'Aprovecha la seguridad y confiabilidad de Amazon Web Services',
+    'home.security.feature3.title': 'Cumplimiento',
+    'home.security.feature3.description': 'Cumple con estándares de seguridad y privacidad internacionales',
+    
+    'home.cta.title': '¿Listo para Comenzar?',
+    'home.cta.subtitle': 'Crea tu cuenta y empieza a analizar documentos en minutos',
+    'home.cta.button': 'Crear Cuenta Gratis',
+    
+    'home.footer.powered': 'Potenciado por',
+    'home.footer.rights': 'Todos los derechos reservados.',
   },
   en: {
     // Header
@@ -297,6 +336,45 @@ const translations = {
     'common.back': 'Back',
     'common.next': 'Next',
     'common.previous': 'Previous',
+    
+    // Home Page
+    'home.hero.title': 'Intelligent Document Analysis with AI',
+    'home.hero.subtitle': 'Process and analyze your documents securely with Amazon Bedrock AI. Your information stays private in your AWS environment.',
+    'home.hero.cta': 'Get Started',
+    'home.hero.login': 'Sign In',
+    
+    'home.features.ai.title': 'AI-Powered',
+    'home.features.ai.description': 'Uses Amazon Bedrock with Claude 3 for deep document analysis, data extraction, and insight generation.',
+    'home.features.security.title': 'Maximum Security',
+    'home.features.security.description': 'Your documents never leave your AWS infrastructure. Cognito authentication and encryption at rest and in transit.',
+    'home.features.private.title': 'Private Environment',
+    'home.features.private.description': 'Dedicated infrastructure in your AWS account. Full control over your data without sharing with third parties.',
+    
+    'home.howItWorks.title': 'How It Works',
+    'home.howItWorks.step1.title': 'Upload Document',
+    'home.howItWorks.step1.description': 'Securely upload PDF, DOCX, or TXT files',
+    'home.howItWorks.step2.title': 'Select Type',
+    'home.howItWorks.step2.description': 'Choose industry for specialized analysis',
+    'home.howItWorks.step3.title': 'AI Processes',
+    'home.howItWorks.step3.description': 'Amazon Bedrock analyzes and extracts information',
+    'home.howItWorks.step4.title': 'Get Results',
+    'home.howItWorks.step4.description': 'Receive summary, key points, and extracted data',
+    
+    'home.security.title': 'Security and Privacy Guaranteed',
+    'home.security.subtitle': 'Your information is protected with the highest AWS security standards',
+    'home.security.feature1.title': 'Private Data',
+    'home.security.feature1.description': 'Your documents stay in your AWS account, never shared',
+    'home.security.feature2.title': 'AWS Infrastructure',
+    'home.security.feature2.description': 'Leverage Amazon Web Services security and reliability',
+    'home.security.feature3.title': 'Compliance',
+    'home.security.feature3.description': 'Meets international security and privacy standards',
+    
+    'home.cta.title': 'Ready to Get Started?',
+    'home.cta.subtitle': 'Create your account and start analyzing documents in minutes',
+    'home.cta.button': 'Create Free Account',
+    
+    'home.footer.powered': 'Powered by',
+    'home.footer.rights': 'All rights reserved.',
   },
 };
 

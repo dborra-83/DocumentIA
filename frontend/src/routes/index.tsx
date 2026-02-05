@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { ConfirmEmailPage } from '../pages/ConfirmEmailPage'
@@ -42,6 +43,10 @@ export const AppRoutes = () => {
   return (
     <Routes>
       {/* Public routes */}
+      <Route 
+        path="/" 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <HomePage />} 
+      />
       <Route 
         path="/login" 
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} 
@@ -98,10 +103,6 @@ export const AppRoutes = () => {
       />
 
       {/* Default routes */}
-      <Route 
-        path="/" 
-        element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} 
-      />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
