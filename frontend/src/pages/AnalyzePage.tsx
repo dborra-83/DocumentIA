@@ -11,10 +11,12 @@ import { UploadProgress } from '../components/UploadProgress';
 import { Button } from '../components/Button';
 import { Alert } from '../components/Alert';
 import { uploadDocument } from '../services/uploadService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type UploadStatus = 'idle' | 'uploading' | 'processing' | 'complete' | 'error';
 
 export const AnalyzePage: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [vertical, setVertical] = useState<string>('');
@@ -39,12 +41,12 @@ export const AnalyzePage: React.FC = () => {
   const handleUpload = async () => {
     // Validate inputs
     if (!selectedFile) {
-      setError('Please select a file to upload');
+      setError(t('analyze.error'));
       return;
     }
 
     if (!vertical) {
-      setVerticalError('Please select a document type');
+      setVerticalError(t('analyze.selectVertical'));
       return;
     }
 
@@ -73,7 +75,7 @@ export const AnalyzePage: React.FC = () => {
     } catch (err) {
       console.error('Upload error:', err);
       setUploadStatus('error');
-      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
+      setError(err instanceof Error ? err.message : t('analyze.error'));
     }
   };
 
@@ -99,9 +101,9 @@ export const AnalyzePage: React.FC = () => {
   return (
     <div className="container p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-dark mb-2">Analyze Document</h1>
+        <h1 className="text-3xl font-bold text-gray-dark mb-2">{t('analyze.title')}</h1>
         <p className="text-gray">
-          Upload a document to get AI-powered analysis with executive summary, key points, and next steps.
+          {t('analyze.subtitle')}
         </p>
       </div>
 
@@ -114,7 +116,7 @@ export const AnalyzePage: React.FC = () => {
       {isComplete && (
         <div className="mb-6">
           <Alert variant="success">
-            Document uploaded successfully! Your document is being analyzed and will appear in your history shortly.
+            {t('analyze.success')}
           </Alert>
         </div>
       )}
@@ -145,7 +147,7 @@ export const AnalyzePage: React.FC = () => {
                   size="sm"
                   onClick={handleReset}
                 >
-                  Change File
+                  {t('common.edit')}
                 </Button>
               </div>
             </div>
@@ -164,14 +166,14 @@ export const AnalyzePage: React.FC = () => {
                 disabled={isUploading || !vertical}
                 className="flex-1"
               >
-                Upload and Analyze
+                {t('analyze.uploadDocument')}
               </Button>
               <Button
                 variant="secondary"
                 onClick={handleReset}
                 disabled={isUploading}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
@@ -193,13 +195,13 @@ export const AnalyzePage: React.FC = () => {
                   onClick={handleViewResults}
                   className="flex-1"
                 >
-                  View in History
+                  {t('dashboard.viewHistory')}
                 </Button>
                 <Button
                   variant="secondary"
                   onClick={handleReset}
                 >
-                  Upload Another
+                  {t('analyze.uploadDocument')}
                 </Button>
               </div>
             )}
@@ -210,9 +212,9 @@ export const AnalyzePage: React.FC = () => {
         {uploadStatus === 'error' && selectedFile && (
           <div className="text-center">
             <div className="text-6xl mb-4">❌</div>
-            <p className="text-lg font-medium text-gray-dark mb-4">Upload Failed</p>
+            <p className="text-lg font-medium text-gray-dark mb-4">{t('analyze.error')}</p>
             <Button variant="primary" onClick={handleReset}>
-              Try Again
+              {t('common.back')}
             </Button>
           </div>
         )}
@@ -220,23 +222,23 @@ export const AnalyzePage: React.FC = () => {
 
       {/* Info section */}
       <div className="bg-blue-light rounded-lg p-6">
-        <h2 className="font-bold text-gray-dark mb-3">How it works</h2>
+        <h2 className="font-bold text-gray-dark mb-3">{t('analyze.selectVertical')}</h2>
         <ol className="space-y-2 text-sm text-gray">
           <li className="flex gap-2">
             <span className="font-bold">1.</span>
-            <span>Select a document type that matches your file</span>
+            <span>{t('analyze.selectVerticalDesc')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">2.</span>
-            <span>Upload your document (PDF, DOCX, or TXT up to 10MB)</span>
+            <span>{t('analyze.supportedFormats')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">3.</span>
-            <span>Our AI analyzes your document and extracts key insights</span>
+            <span>{t('analyze.processing')}</span>
           </li>
           <li className="flex gap-2">
             <span className="font-bold">4.</span>
-            <span>View results in your history with executive summary, key points, and next steps</span>
+            <span>{t('history.viewAnalysis')}</span>
           </li>
         </ol>
       </div>

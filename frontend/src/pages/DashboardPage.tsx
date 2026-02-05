@@ -7,8 +7,10 @@ import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { StatsCard } from '../components/dashboard/StatsCard';
 import type { DocumentRecord } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen bg-sky-light">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-bright-blue border-t-transparent"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <p className="mt-4 text-gray-600">{t('dashboard.loading')}</p>
         </div>
       </div>
     );
@@ -71,13 +73,13 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-sky-light p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white border-l-4 border-coral rounded-lg p-6">
-            <h3 className="text-coral font-semibold text-lg mb-2">Error Loading Dashboard</h3>
+            <h3 className="text-coral font-semibold text-lg mb-2">{t('dashboard.error')}</h3>
             <p className="text-gray-600">{error}</p>
             <button
               onClick={loadDashboardData}
               className="mt-4 px-4 py-2 bg-bright-blue text-white rounded-lg hover:bg-turquoise transition-colors"
             >
-              Try Again
+              {t('common.back')}
             </button>
           </div>
         </div>
@@ -90,14 +92,14 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-navy-dark mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's your document analysis overview.</p>
+          <h1 className="text-4xl font-bold text-navy-dark mb-2">{t('dashboard.title')}</h1>
+          <p className="text-gray-600">{t('dashboard.uploadFirst')}</p>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
-            title="Total Documents"
+            title={t('dashboard.totalDocuments')}
             value={totalDocuments}
             icon={
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +109,7 @@ export default function DashboardPage() {
             color="blue"
           />
           <StatsCard
-            title="Completed"
+            title={t('dashboard.completed')}
             value={completedDocuments}
             icon={
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +119,7 @@ export default function DashboardPage() {
             color="turquoise"
           />
           <StatsCard
-            title="Avg Processing Time"
+            title={t('dashboard.avgProcessingTime')}
             value={`${avgProcessingTime.toFixed(1)}s`}
             icon={
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +129,7 @@ export default function DashboardPage() {
             color="violet"
           />
           <StatsCard
-            title="Top Vertical"
+            title={t('dashboard.favoriteVertical')}
             value={topVertical.charAt(0).toUpperCase() + topVertical.slice(1)}
             icon={
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,27 +144,27 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-navy-dark">Status Overview</h3>
+              <h3 className="text-lg font-semibold text-navy-dark">{t('dashboard.statusOverview')}</h3>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-turquoise rounded-full"></div>
-                  <span className="text-sm text-gray-600">Completed</span>
+                  <span className="text-sm text-gray-600">{t('dashboard.completed')}</span>
                 </div>
                 <span className="text-sm font-semibold text-navy-dark">{completedDocuments}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-bright-blue rounded-full"></div>
-                  <span className="text-sm text-gray-600">Processing</span>
+                  <span className="text-sm text-gray-600">{t('dashboard.processing')}</span>
                 </div>
                 <span className="text-sm font-semibold text-navy-dark">{processingDocuments}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-coral rounded-full"></div>
-                  <span className="text-sm text-gray-600">Failed</span>
+                  <span className="text-sm text-gray-600">{t('dashboard.failed')}</span>
                 </div>
                 <span className="text-sm font-semibold text-navy-dark">{failedDocuments}</span>
               </div>
@@ -171,7 +173,7 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <div className="lg:col-span-2 bg-gradient-to-br from-navy-blue to-navy-dark rounded-xl shadow-sm p-6 text-white">
-            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('dashboard.quickActions')}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link
                 to="/analyze"
@@ -183,8 +185,8 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold">Upload Document</p>
-                  <p className="text-xs text-gray-300">Analyze a new file</p>
+                  <p className="font-semibold">{t('dashboard.uploadDocument')}</p>
+                  <p className="text-xs text-gray-300">{t('analyze.subtitle')}</p>
                 </div>
               </Link>
               <Link
@@ -197,8 +199,8 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold">View History</p>
-                  <p className="text-xs text-gray-300">See all documents</p>
+                  <p className="font-semibold">{t('dashboard.viewHistory')}</p>
+                  <p className="text-xs text-gray-300">{t('history.subtitle')}</p>
                 </div>
               </Link>
             </div>
@@ -208,9 +210,9 @@ export default function DashboardPage() {
         {/* Recent Activity */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-navy-dark">Recent Activity</h3>
+            <h3 className="text-lg font-semibold text-navy-dark">{t('dashboard.recentActivity')}</h3>
             <Link to="/history" className="text-sm text-bright-blue hover:text-turquoise font-medium">
-              View All →
+              {t('dashboard.viewHistory')} →
             </Link>
           </div>
 
@@ -219,12 +221,12 @@ export default function DashboardPage() {
               <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="text-gray-600 mb-4">No documents yet</p>
+              <p className="text-gray-600 mb-4">{t('dashboard.noDocuments')}</p>
               <Link
                 to="/analyze"
                 className="inline-block px-6 py-3 bg-bright-blue text-white rounded-lg hover:bg-turquoise transition-colors font-medium"
               >
-                Upload Your First Document
+                {t('dashboard.uploadDocument')}
               </Link>
             </div>
           ) : (

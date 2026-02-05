@@ -7,9 +7,12 @@ import { IamRolesConstruct } from './iam-roles-construct';
 import { LambdaFunctionsConstruct } from './lambda-functions-construct';
 import { StepFunctionsConstruct } from './step-functions-construct';
 import { ApiGatewayConstruct } from './api-gateway-construct';
+import { CloudFrontConstruct } from './cloudfront-construct';
 
 export interface DocumentAnalysisStackProps extends cdk.StackProps {
   environment: string;
+  domainName?: string;
+  certificateArn?: string;
 }
 
 export class DocumentAnalysisStack extends cdk.Stack {
@@ -95,8 +98,17 @@ export class DocumentAnalysisStack extends cdk.Stack {
       environment,
     });
 
+    // CloudFront Distribution - Frontend hosting
+    // Requirements: 9.1, 9.5, 9.6
+    const cloudFront = new CloudFrontConstruct(this, 'CloudFront', {
+      webHostingBucket: s3Buckets.webHostingBucket,
+      apiGatewayUrl: apiGateway.api.url,
+      environment,
+      domainName: props.domainName,
+      certificateArn: props.certificateArn,
+    });
+
     // TODO: Add remaining resource stacks here
-    // - CloudFront distribution
     // - CloudWatch alarms and dashboards
 
     // Output important values

@@ -2,15 +2,18 @@ import { BrowserRouter } from 'react-router-dom'
 import { AppRoutes } from './routes'
 import { AuthProvider } from './contexts/AuthContext'
 import { BrandingProvider } from './contexts/BrandingContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 
 function App() {
   return (
     <BrowserRouter>
-      <BrandingProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrandingProvider>
+      <LanguageProvider>
+        <BrandingProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrandingProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
 }

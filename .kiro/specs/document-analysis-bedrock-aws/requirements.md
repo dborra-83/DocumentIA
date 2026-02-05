@@ -82,10 +82,11 @@ El sistema permitirá a usuarios autenticados subir documentos (PDF, DOCX, TXT),
 4. THE BedrockProcessor SHALL read text directly from TXT documents
 5. THE BedrockProcessor SHALL construct prompts using the selected vertical template
 6. THE BedrockProcessor SHALL invoke Bedrock with model anthropic.claude-3-sonnet-20240229-v1:0
-7. THE Bedrock SHALL return structured JSON with executive_summary, key_points, and next_steps fields
-8. WHEN text extraction fails, THEN THE System SHALL log the error and notify the user
-9. THE System SHALL process documents within 60 seconds for files under 5MB
-10. THE System SHALL store processing status in DynamoDB_Table with states: pending, processing, completed, failed
+7. THE Bedrock SHALL return structured JSON with resumen_ejecutivo, puntos_clave, proximos_pasos, datos_extraidos, and metadatos fields (all in Spanish)
+8. THE System SHALL always generate analysis results in Spanish regardless of document language
+9. WHEN text extraction fails, THEN THE System SHALL log the error and notify the user
+10. THE System SHALL process documents within 60 seconds for files under 5MB
+11. THE System SHALL store processing status in DynamoDB_Table with states: pending, processing, completed, failed
 
 ### Requirement 5: Generación y Almacenamiento de Resultados
 
@@ -94,13 +95,15 @@ El sistema permitirá a usuarios autenticados subir documentos (PDF, DOCX, TXT),
 #### Acceptance Criteria
 
 1. THE ResultsGenerator SHALL parse Bedrock JSON responses into structured data
-2. THE System SHALL store analysis results in DynamoDB_Table with document_id, user_id, vertical, timestamp
+2. THE System SHALL store analysis results in DynamoDB_Table with document_id, user_id, vertical, timestamp, extractedData, and metadata
 3. THE System SHALL store complete analysis JSON in S3_Bucket for archival
-4. THE Frontend SHALL display executive summary in a prominent card
-5. THE Frontend SHALL display key points as a bulleted list with icons
-6. THE Frontend SHALL display next steps as numbered action items
-7. WHEN analysis completes, THE System SHALL update document status to completed
-8. THE System SHALL maintain referential integrity between Documents and AnalysisResults tables
+4. THE Frontend SHALL display resumen_ejecutivo (executive summary) in a prominent card
+5. THE Frontend SHALL display puntos_clave (key points) as a bulleted list with icons
+6. THE Frontend SHALL display proximos_pasos (next steps) as numbered action items
+7. THE Frontend SHALL display datos_extraidos (extracted data) in categorized sections with visual icons
+8. THE Frontend SHALL provide JSON download functionality for complete analysis results
+9. WHEN analysis completes, THE System SHALL update document status to completed
+10. THE System SHALL maintain referential integrity between Documents and AnalysisResults tables
 
 ### Requirement 6: Dashboard y Métricas
 
@@ -245,7 +248,37 @@ El sistema permitirá a usuarios autenticados subir documentos (PDF, DOCX, TXT),
 9. WHEN Bedrock processes a document, THE System SHALL inject vertical-specific instructions into the prompt
 10. THE System SHALL store template definitions in configuration files or DynamoDB
 
-### Requirement 15: Manejo de Errores y Resiliencia
+### Requirement 16: Extracción de Datos Estructurados
+
+**User Story:** Como usuario, quiero que el sistema extraiga automáticamente datos importantes de mis documentos, para poder acceder rápidamente a información clave sin leer todo el documento.
+
+#### Acceptance Criteria
+
+1. THE System SHALL extract nombres_personas (person names) from documents
+2. THE System SHALL extract nombres_empresas (company names) from documents
+3. THE System SHALL extract fechas_importantes (important dates) with descriptions
+4. THE System SHALL extract valores_monetarios (monetary values) with amount, currency, and concept
+5. THE System SHALL extract numeros_referencia (reference numbers) from documents
+6. THE System SHALL extract ubicaciones (locations) from documents
+7. THE System SHALL extract emails from documents
+8. THE System SHALL extract telefonos (phone numbers) from documents
+9. THE Frontend SHALL display extracted data in categorized visual sections with icons
+10. THE System SHALL store extracted data in DynamoDB as JSON string in extractedData field
+11. THE System SHALL include extracted data in JSON export downloads
+
+### Requirement 17: Metadatos de Análisis
+
+**User Story:** Como usuario, quiero ver metadatos sobre el análisis realizado, para entender el contexto y confiabilidad de los resultados.
+
+#### Acceptance Criteria
+
+1. THE System SHALL identify and store tipo_documento (document type)
+2. THE System SHALL identify and store idioma_original (original language)
+3. THE System SHALL calculate and store nivel_confianza (confidence level: alto/medio/bajo)
+4. THE System SHALL determine if requiere_revision_humana (requires human review)
+5. THE Frontend SHALL display metadata in the analysis view
+6. THE System SHALL store metadata in DynamoDB as JSON string in metadata field
+7. THE System SHALL include metadata in JSON export downloads
 
 **User Story:** Como usuario, quiero que el sistema maneje errores gracefully, para no perder mi trabajo y entender qué salió mal.
 
@@ -261,3 +294,23 @@ El sistema permitirá a usuarios autenticados subir documentos (PDF, DOCX, TXT),
 8. THE System SHALL maintain data consistency between S3 and DynamoDB during failures
 9. WHEN Step Function execution fails, THE System SHALL trigger error handling workflow
 
+
+
+### Requirement 18: Marca Blanca (White-Label Branding)
+
+**User Story:** Como administrador, quiero personalizar la marca de la aplicación, para adaptarla a mi organización o cliente.
+
+#### Acceptance Criteria
+
+1. THE System SHALL provide an Admin page accessible to authenticated users
+2. THE Admin page SHALL allow uploading a custom logo image (PNG, JPG, SVG)
+3. THE Admin page SHALL allow editing the application name
+4. THE Admin page SHALL allow editing the application tagline
+5. THE System SHALL display custom logo in the header when configured
+6. THE System SHALL display custom application name in the header
+7. THE System SHALL persist branding configuration in browser localStorage
+8. THE Admin page SHALL provide real-time preview of branding changes
+9. THE Admin page SHALL allow resetting to default branding
+10. THE System SHALL maintain branding configuration across browser sessions
+11. THE Admin page SHALL organize settings in tabs (General, Marca Blanca, Límites)
+12. THE System SHALL use modern color palette: navy-dark (#000024), navy-blue (#0A1732), bright-blue (#008FD0), sky-light (#E9F3FA), turquoise (#08BDBA), violet (#A56EFF), pink (#EE5396), gold (#F1C21B), coral (#ED4739)

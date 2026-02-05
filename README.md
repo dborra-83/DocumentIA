@@ -158,12 +158,36 @@ The system supports three environments:
 - **staging**: Pre-production environment
 - **prod**: Production environment
 
-### Deploy to specific environment
+### Quick Deployment (Recommended)
+
+Use the automated deployment script:
+
+```powershell
+# Deploy to production
+.\deploy-production.ps1 -Environment prod
+
+# Deploy to staging
+.\deploy-production.ps1 -Environment staging
+
+# With custom domain
+.\deploy-production.ps1 -Environment prod -DomainName "app.documentia.com" -CertificateArn "arn:aws:acm:..."
+```
+
+### Manual Deployment
 
 ```bash
 cd infrastructure
 cdk deploy --all --context environment=prod
 ```
+
+### CI/CD with GitHub Actions
+
+The project includes GitHub Actions workflows for automated deployment:
+- Push to `main` → Deploy to production
+- Push to `staging` → Deploy to staging
+- Push to `develop` → Deploy to dev
+
+See [PRODUCTION_DEPLOYMENT_GUIDE.md](PRODUCTION_DEPLOYMENT_GUIDE.md) for detailed instructions.
 
 ## Monitoring
 

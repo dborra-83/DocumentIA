@@ -6,10 +6,12 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useBranding } from '../contexts/BrandingContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { config } = useBranding();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,7 +59,7 @@ export const Header: React.FC = () => {
                     : 'text-gray-300 hover:bg-navy-dark hover:text-white'
                 }`}
               >
-                Dashboard
+                {t('header.dashboard')}
               </Link>
               <Link
                 to="/analyze"
@@ -67,7 +69,7 @@ export const Header: React.FC = () => {
                     : 'text-gray-300 hover:bg-navy-dark hover:text-white'
                 }`}
               >
-                Analyze
+                {t('header.analyze')}
               </Link>
               <Link
                 to="/history"
@@ -77,7 +79,7 @@ export const Header: React.FC = () => {
                     : 'text-gray-300 hover:bg-navy-dark hover:text-white'
                 }`}
               >
-                History
+                {t('header.history')}
               </Link>
               <Link
                 to="/admin"
@@ -87,7 +89,7 @@ export const Header: React.FC = () => {
                     : 'text-gray-300 hover:bg-navy-dark hover:text-white'
                 }`}
               >
-                Admin
+                {t('header.admin')}
               </Link>
             </nav>
           )}
@@ -105,7 +107,7 @@ export const Header: React.FC = () => {
                 onClick={handleLogout}
                 className="px-4 py-2 bg-navy-dark hover:bg-coral text-white rounded-lg transition-all text-sm font-medium"
               >
-                Logout
+                {t('header.logout')}
               </button>
             </div>
           )}

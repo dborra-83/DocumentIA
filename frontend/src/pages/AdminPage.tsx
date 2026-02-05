@@ -4,11 +4,13 @@
 
 import React, { useState } from 'react';
 import { useBranding } from '../contexts/BrandingContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type TabType = 'general' | 'branding' | 'limits';
 
 export const AdminPage: React.FC = () => {
   const { config, updateConfig, resetConfig } = useBranding();
+  const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('branding');
   const [formData, setFormData] = useState(config);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -54,7 +56,7 @@ export const AdminPage: React.FC = () => {
   };
 
   const handleReset = () => {
-    if (confirm('¿Estás seguro de que quieres restablecer la configuración por defecto?')) {
+    if (confirm(t('admin.resetConfirm'))) {
       resetConfig();
       setFormData({
         appName: 'DocumentIA',
@@ -65,15 +67,15 @@ export const AdminPage: React.FC = () => {
       });
       setLogoPreview(null);
       setLogoFile(null);
-      setSaveMessage('Configuración restablecida');
+      setSaveMessage(t('admin.resetSuccess'));
       setTimeout(() => setSaveMessage(null), 3000);
     }
   };
 
   const tabs = [
-    { id: 'general' as TabType, label: 'General', icon: '⚙️' },
-    { id: 'branding' as TabType, label: 'Marca Blanca', icon: '🎨' },
-    { id: 'limits' as TabType, label: 'Límites', icon: '📊' },
+    { id: 'general' as TabType, label: t('admin.general'), icon: '⚙️' },
+    { id: 'branding' as TabType, label: t('admin.branding'), icon: '🎨' },
+    { id: 'limits' as TabType, label: t('admin.limits'), icon: '📊' },
   ];
 
   return (
@@ -81,14 +83,14 @@ export const AdminPage: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-navy-dark mb-2">Configuración</h1>
-          <p className="text-gray-600">Personaliza tu aplicación y ajusta la configuración</p>
+          <h1 className="text-3xl font-bold text-navy-dark mb-2">{t('admin.title')}</h1>
+          <p className="text-gray-600">{t('admin.subtitle')}</p>
         </div>
 
         {/* Save Message */}
         {saveMessage && (
           <div className={`mb-6 p-4 rounded-lg ${
-            saveMessage.includes('Error') 
+            saveMessage.includes('Error') || saveMessage.includes('error')
               ? 'bg-coral/10 text-coral border border-coral/20' 
               : 'bg-turquoise/10 text-turquoise border border-turquoise/20'
           }`}>
@@ -122,21 +124,25 @@ export const AdminPage: React.FC = () => {
             {/* General Tab */}
             {activeTab === 'general' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-navy-dark mb-4">Configuración General</h2>
+                <h2 className="text-xl font-semibold text-navy-dark mb-4">{t('admin.general')}</h2>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Idioma
+                    {t('admin.language')}
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bright-blue focus:border-transparent">
-                    <option>Español</option>
-                    <option>English</option>
+                  <select 
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as 'es' | 'en')}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bright-blue focus:border-transparent"
+                  >
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Zona Horaria
+                    {t('admin.timezone')}
                   </label>
                   <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bright-blue focus:border-transparent">
                     <option>America/Argentina/Buenos_Aires (GMT-3)</option>
@@ -147,7 +153,7 @@ export const AdminPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Formato de Fecha
+                    {t('admin.dateFormat')}
                   </label>
                   <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bright-blue focus:border-transparent">
                     <option>DD/MM/YYYY</option>
@@ -161,12 +167,12 @@ export const AdminPage: React.FC = () => {
             {/* Branding Tab */}
             {activeTab === 'branding' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-navy-dark mb-4">Marca Blanca</h2>
+                <h2 className="text-xl font-semibold text-navy-dark mb-4">{t('admin.branding')}</h2>
                 
                 {/* Logo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo de la Aplicación
+                    {t('admin.logo')}
                   </label>
                   <div className="flex items-start gap-6">
                     <div className="flex-shrink-0">
@@ -196,10 +202,13 @@ export const AdminPage: React.FC = () => {
                         htmlFor="logo-upload"
                         className="inline-block px-4 py-2 bg-bright-blue text-white rounded-lg hover:bg-turquoise transition-colors cursor-pointer"
                       >
-                        Seleccionar Logo
+                        {t('admin.selectLogo')}
                       </label>
                       <p className="text-sm text-gray-500 mt-2">
-                        Formatos: PNG, JPG, SVG. Tamaño recomendado: 200x200px
+                        {language === 'es' 
+                          ? 'Formatos: PNG, JPG, SVG. Tamaño recomendado: 200x200px'
+                          : 'Formats: PNG, JPG, SVG. Recommended size: 200x200px'
+                        }
                       </p>
                       {logoPreview && (
                         <button
@@ -209,7 +218,7 @@ export const AdminPage: React.FC = () => {
                           }}
                           className="text-sm text-coral hover:text-coral/80 mt-2"
                         >
-                          Eliminar logo
+                          {t('admin.removeLogo')}
                         </button>
                       )}
                     </div>
@@ -219,7 +228,7 @@ export const AdminPage: React.FC = () => {
                 {/* App Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre de la Aplicación
+                    {t('admin.appName')}
                   </label>
                   <input
                     type="text"
@@ -233,7 +242,7 @@ export const AdminPage: React.FC = () => {
                 {/* App Tagline */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tagline / Descripción
+                    {t('admin.tagline')}
                   </label>
                   <input
                     type="text"
@@ -246,7 +255,7 @@ export const AdminPage: React.FC = () => {
 
                 {/* Preview */}
                 <div className="mt-8 p-6 bg-gradient-to-br from-navy-blue to-navy-dark rounded-lg">
-                  <p className="text-sm text-gray-400 mb-3">Vista Previa del Header</p>
+                  <p className="text-sm text-gray-400 mb-3">{t('admin.headerPreview')}</p>
                   <div className="flex items-center space-x-3">
                     {logoPreview ? (
                       <img src={logoPreview} alt="Logo" className="w-10 h-10 object-contain" />
@@ -269,11 +278,11 @@ export const AdminPage: React.FC = () => {
             {/* Limits Tab */}
             {activeTab === 'limits' && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-navy-dark mb-4">Límites y Cuotas</h2>
+                <h2 className="text-xl font-semibold text-navy-dark mb-4">{t('admin.limits')}</h2>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tamaño Máximo de Archivo (MB)
+                    {t('admin.maxFileSize')}
                   </label>
                   <input
                     type="number"
@@ -284,7 +293,7 @@ export const AdminPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número Máximo de Páginas (PDF)
+                    {t('admin.maxPDFPages')}
                   </label>
                   <input
                     type="number"
@@ -295,7 +304,7 @@ export const AdminPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Documentos por Mes
+                    {t('admin.docsPerMonth')}
                   </label>
                   <input
                     type="number"
@@ -306,7 +315,10 @@ export const AdminPage: React.FC = () => {
 
                 <div className="mt-6 p-4 bg-sky-light rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Nota:</strong> Los límites se aplicarán a todos los usuarios de la aplicación.
+                    <strong>{language === 'es' ? 'Nota:' : 'Note:'}</strong> {language === 'es' 
+                      ? 'Los límites se aplicarán a todos los usuarios de la aplicación.'
+                      : 'Limits will apply to all application users.'
+                    }
                   </p>
                 </div>
               </div>
@@ -320,14 +332,14 @@ export const AdminPage: React.FC = () => {
             onClick={handleReset}
             className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            Restablecer
+            {t('admin.reset')}
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
             className="px-6 py-2 bg-bright-blue text-white rounded-lg hover:bg-turquoise transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+            {isSaving ? t('admin.saving') : t('admin.save')}
           </button>
         </div>
       </div>

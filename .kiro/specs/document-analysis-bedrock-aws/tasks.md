@@ -102,13 +102,16 @@ The implementation uses:
     - **Property 7: Upload Error Messaging**
     - **Validates: Requirements 2.9**
 
-- [ ] 5. Implement vertical templates configuration
+- [x] 5. Implement vertical templates configuration
   - [x] 5.1 Create vertical templates module
     - Define 8 vertical templates: Healthcare, Education, Retail, Legal, Finance, Manufacturing, HR, Technology
     - Create template structure with vertical-specific instructions
     - Implement template loader function
     - Store templates in Python module or DynamoDB
-    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8_
+    - **UPDATED**: Templates now generate analysis in Spanish with structured data extraction
+    - **UPDATED**: Added datos_extraidos section for extracting: nombres_personas, nombres_empresas, fechas_importantes, valores_monetarios, numeros_referencia, ubicaciones, emails, telefonos
+    - **UPDATED**: Added metadatos section for: tipo_documento, idioma_original, nivel_confianza, requiere_revision_humana
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 16.1-16.11, 17.1-17.7_
   
   - [ ]* 5.2 Write property test for vertical template loading
     - **Property 8: Vertical Template Loading**
@@ -147,14 +150,18 @@ The implementation uses:
     - Test corrupted files
     - _Requirements: 4.8_
 
-- [ ] 8. Implement Bedrock integration for BedrockProcessor
+- [x] 8. Implement Bedrock integration for BedrockProcessor
   - [x] 8.1 Create Bedrock client and prompt construction
     - Initialize boto3 Bedrock client
     - Implement prompt template with placeholders for vertical and text
     - Create prompt construction function that combines template + extracted text
     - Configure Bedrock model ID: anthropic.claude-3-sonnet-20240229-v1:0
     - Set appropriate temperature and max tokens
-    - _Requirements: 4.5, 4.6_
+    - **UPDATED**: Prompts now completely in Spanish
+    - **UPDATED**: Response format includes resumen_ejecutivo, puntos_clave, proximos_pasos (Spanish field names)
+    - **UPDATED**: Response includes datos_extraidos with structured data extraction
+    - **UPDATED**: Response includes metadatos with analysis metadata
+    - _Requirements: 4.5, 4.6, 4.8, 16.1-16.11, 17.1-17.7_
   
   - [ ]* 8.2 Write property test for prompt construction
     - **Property 11: Prompt Construction with Template**
@@ -176,14 +183,18 @@ The implementation uses:
     - **Property 30: Retry with Exponential Backoff**
     - **Validates: Requirements 15.1, 15.4**
 
-- [ ] 9. Implement result storage for BedrockProcessor
+- [x] 9. Implement result storage for BedrockProcessor
   - [x] 9.1 Create result persistence functions
     - Implement DynamoDB AnalysisResults record creation
     - Implement S3 result JSON upload
     - Implement document status update to 'completed'
     - Calculate and store processing time
     - Use DynamoDB transactions for consistency
-    - _Requirements: 5.2, 5.3, 5.7_
+    - **UPDATED**: Store extractedData field in DynamoDB as JSON string
+    - **UPDATED**: Store metadata field in DynamoDB as JSON string
+    - **UPDATED**: Validate Spanish field names (resumen_ejecutivo, puntos_clave, proximos_pasos)
+    - **UPDATED**: Provide default values for optional fields (datos_extraidos, metadatos)
+    - _Requirements: 5.2, 5.3, 5.7, 16.10, 17.6_
   
   - [ ]* 9.2 Write property test for complete result persistence
     - **Property 14: Complete Result Persistence**
@@ -202,7 +213,7 @@ The implementation uses:
     - **Validates: Requirements 15.8**
 
 
-- [ ] 10. Complete BedrockProcessor Lambda main handler
+- [x] 10. Complete BedrockProcessor Lambda main handler
   - [x] 10.1 Wire together text extraction, Bedrock, and storage
     - Implement main Lambda handler function
     - Download document from S3 using documentId
@@ -213,7 +224,10 @@ The implementation uses:
     - Store results in DynamoDB and S3
     - Update document status to 'completed' or 'failed'
     - Return processing summary
-    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 5.2, 5.3, 5.7_
+    - **UPDATED**: Handler validates Spanish field names in Bedrock response
+    - **UPDATED**: Handler stores extractedData and metadata in DynamoDB
+    - **UPDATED**: All analysis results generated in Spanish
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 5.2, 5.3, 5.7, 16.10, 17.6_
   
   - [ ]* 10.2 Write property test for document status transitions
     - **Property 13: Document Status Transitions**
@@ -521,13 +535,13 @@ The implementation uses:
 
 
 - [ ] 24. Implement analysis results display module
-  - [~] 24.1 Create results service
+  - [x] 24.1 Create results service
     - Implement API integration to fetch analysis results
     - Create getAnalysisResult function
     - Add caching for results
     - _Requirements: 5.1_
   
-  - [~] 24.2 Create results UI components
+  - [x] 24.2 Create results UI components
     - Create ResultsCard container component
     - Create ExecutiveSummary component with prominent styling
     - Create KeyPointsList component with bullet icons
@@ -535,7 +549,12 @@ The implementation uses:
     - Create ProcessingLog component for real-time status
     - Apply color palette: white background, blue accents
     - Add loading skeleton states
-    - _Requirements: 5.4, 5.5, 5.6, 11.1, 11.3, 11.8_
+    - **UPDATED**: Display datos_extraidos (extracted data) in categorized sections
+    - **UPDATED**: Visual categories with icons: personas (👤), empresas (🏢), fechas (📅), valores monetarios (💰), ubicaciones (📍), emails (📧), teléfonos (📞), números de referencia (🔢)
+    - **UPDATED**: Color-coded tags for each data category
+    - **UPDATED**: JSON download button with gradient styling (violet-pink)
+    - **UPDATED**: downloadJSON function exports complete analysis as JSON file
+    - _Requirements: 5.4, 5.5, 5.6, 5.7, 5.8, 11.1, 11.3, 11.8, 16.9, 16.11, 17.5, 17.7_
   
   - [ ]* 24.3 Write unit tests for results display
     - Test results rendering with mock data
@@ -544,13 +563,13 @@ The implementation uses:
     - _Requirements: 5.4, 5.5, 5.6_
 
 - [ ] 25. Implement dashboard module
-  - [~] 25.1 Create metrics service
+  - [x] 25.1 Create metrics service
     - Implement MetricsService with API integration
     - Create getUserMetrics function
     - Add caching for metrics
     - _Requirements: 6.1, 6.2, 6.3_
   
-  - [~] 25.2 Create dashboard UI components
+  - [x] 25.2 Create dashboard UI components
     - Create DashboardPage container
     - Create KPICard component for individual metrics
     - Create DocumentsChart component for time-series visualization
@@ -558,6 +577,13 @@ The implementation uses:
     - Display total documents, avg processing time, favorite vertical
     - Apply responsive design for mobile/tablet/desktop
     - Add refresh functionality
+    - **IMPLEMENTED**: StatsCard component with color variants (blue, turquoise, violet, pink, gold)
+    - **IMPLEMENTED**: 4 stat cards: Total Documents, Completed, Avg Processing Time, Favorite Vertical
+    - **IMPLEMENTED**: Status overview section with document counts by status
+    - **IMPLEMENTED**: Quick Actions section with navigation buttons
+    - **IMPLEMENTED**: Recent Activity section showing last 5 documents
+    - **IMPLEMENTED**: Loading, error, and empty states
+    - **IMPLEMENTED**: New color palette applied (navy-dark, navy-blue, bright-blue, sky-light, turquoise, violet, pink, gold, coral)
     - _Requirements: 6.4, 6.8, 11.1, 11.2_
   
   - [ ]* 25.3 Write unit tests for dashboard
@@ -565,6 +591,44 @@ The implementation uses:
     - Test chart rendering
     - Test refresh functionality
     - _Requirements: 6.4, 6.8_
+
+- [x] 25.4 Implement Admin page with white-label branding
+  - [x] 25.4.1 Create BrandingContext for global branding state
+    - Implement React Context for branding configuration
+    - Store config in localStorage for persistence
+    - Provide updateConfig and resetConfig functions
+    - Default values: appName="DocumentIA", appTagline="AI-Powered Document Analysis"
+    - _Requirements: 18.7, 18.10_
+  
+  - [x] 25.4.2 Create AdminPage with tabs
+    - Create tab system: General, Marca Blanca, Límites
+    - General tab: language, timezone, date format selectors
+    - Límites tab: max file size, max PDF pages, documents per month
+    - Apply new color palette and responsive design
+    - _Requirements: 18.1, 18.11_
+  
+  - [x] 25.4.3 Implement Marca Blanca tab
+    - Logo uploader with file input and preview
+    - Convert uploaded image to base64 for storage
+    - Application name input field
+    - Tagline input field
+    - Real-time preview of header with branding
+    - Save and Reset buttons
+    - _Requirements: 18.2, 18.3, 18.4, 18.8, 18.9_
+  
+  - [x] 25.4.4 Update Header to use branding config
+    - Display custom logo when configured
+    - Display custom app name
+    - Add link to Admin page
+    - Maintain responsive design
+    - _Requirements: 18.5, 18.6_
+  
+  - [x] 25.4.5 Configure Tailwind CSS with new color palette
+    - Install Tailwind CSS v3.4.0
+    - Configure custom colors in tailwind.config.js
+    - Update index.css with Tailwind directives
+    - Apply color palette throughout application
+    - _Requirements: 18.12_
 
 - [ ] 26. Implement history module
   - [~] 26.1 Create history service

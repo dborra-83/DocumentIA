@@ -1,0 +1,374 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Job 1: Run Tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            infrastructure/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          pytest -v --cov=. --cov-report=xml
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --run --coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/coverage.xml,./frontend/coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+
+  # Job 2: Build Lambda Packages
+  build:
+    name: Build Lambda Packages
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build shared layer
+        run: |
+          cd backend/shared
+          rm -rf python layer.zip
+          mkdir -p python
+          pip install -r requirements.txt -t python/ --upgrade
+          cp *.py python/
+          cd python && zip -r ../layer.zip . && cd ..
+
+      - name: Build Lambda functions
+        run: |
+          for func in document-upload bedrock-processor step-functions-trigger document-delete; do
+            echo "Building $func..."
+            cd backend/$func
+            rm -f package.zip
+            if [ -f requirements.txt ]; then
+              pip install -r requirements.txt -t . --upgrade
+            fi
+            zip -r package.zip .
+            cd ../..
+          done
+
+      - name: Upload Lambda artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-packages
+          path: |
+            backend/shared/layer.zip
+            backend/*/package.zip
+          retention-days: 7
+
+  # Job 3: Deploy Infrastructure
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: infrastructure/package-lock.json
+
+      - name: Download Lambda artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-packages
+          path: backend/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install CDK dependencies
+        run: |
+          cd infrastructure
+          npm ci
+
+      - name: Build CDK
+        run: |
+          cd infrastructure
+          npm run build
+
+      - name: CDK Bootstrap
+        run: |
+          cd infrastructure
+          npx cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }}
+
+      - name: CDK Deploy
+        run: |
+          cd infrastructure
+          npx cdk deploy --all \
+            --require-approval never \
+            --context environment=${{ steps.env.outputs.environment }} \
+            --outputs-file ../cdk-outputs.json
+
+      - name: Upload CDK outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-outputs
+          path: cdk-outputs.json
+          retention-days: 7
+
+  # Job 4: Deploy Frontend
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: deploy-infrastructure
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Download CDK outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-outputs
+          path: .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create environment file
+        run: |
+          cd frontend
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          API_URL=$(jq -r ".[\"$STACK_NAME\"].ApiGatewayUrl" ../cdk-outputs.json)
+          USER_POOL_ID=$(jq -r ".[\"$STACK_NAME\"].UserPoolId" ../cdk-outputs.json)
+          USER_POOL_CLIENT_ID=$(jq -r ".[\"$STACK_NAME\"].UserPoolClientId" ../cdk-outputs.json)
+          
+          cat > .env.production << EOF
+          VITE_API_URL=$API_URL
+          VITE_API_REGION=${{ env.AWS_REGION }}
+          VITE_USER_POOL_ID=$USER_POOL_ID
+          VITE_USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID
+          VITE_COGNITO_REGION=${{ env.AWS_REGION }}
+          VITE_ENVIRONMENT=${{ steps.env.outputs.environment }}
+          EOF
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Deploy to S3
+        run: |
+          cd frontend
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          BUCKET_NAME=$(jq -r ".[\"$STACK_NAME\"].WebHostingBucketName" ../cdk-outputs.json)
+          aws s3 sync dist/ s3://$BUCKET_NAME/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          DISTRIBUTION_ID=$(jq -r ".[\"$STACK_NAME\"].DistributionId" cdk-outputs.json)
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+
+      - name: Get deployment URL
+        run: |
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          CLOUDFRONT_URL=$(jq -r ".[\"$STACK_NAME\"].CloudFrontUrl" cdk-outputs.json)
+          echo "🚀 Application deployed to: $CLOUDFRONT_URL"
+          echo "DEPLOYMENT_URL=$CLOUDFRONT_URL" >> $GITHUB_ENV
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployment ready at: ${{ env.DEPLOYMENT_URL }}'
+            })
+
+  # Job 5: Smoke Tests
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-frontend
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download CDK outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: cdk-outputs
+          path: .
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test frontend availability
+        run: |
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          CLOUDFRONT_URL=$(jq -r ".[\"$STACK_NAME\"].CloudFrontUrl" cdk-outputs.json)
+          
+          echo "Testing $CLOUDFRONT_URL..."
+          
+          # Wait for CloudFront to be ready
+          sleep 30
+          
+          # Test HTTP status
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" $CLOUDFRONT_URL)
+          if [ $STATUS -eq 200 ]; then
+            echo "✅ Frontend is accessible (HTTP $STATUS)"
+          else
+            echo "❌ Frontend returned HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Test API availability
+        run: |
+          STACK_NAME="DocumentAnalysisStack-${{ steps.env.outputs.environment }}"
+          API_URL=$(jq -r ".[\"$STACK_NAME\"].ApiGatewayUrl" cdk-outputs.json)
+          
+          echo "Testing $API_URL..."
+          
+          # Test API health (should return 401 without auth)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${API_URL}/documents)
+          if [ $STATUS -eq 401 ] || [ $STATUS -eq 403 ]; then
+            echo "✅ API is accessible and requires authentication (HTTP $STATUS)"
+          else
+            echo "❌ API returned unexpected status: HTTP $STATUS"
+            exit 1
+          fi
