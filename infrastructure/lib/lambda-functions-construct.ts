@@ -22,6 +22,7 @@ export interface LambdaFunctionsConstructProps {
   exportHandlerRole: iam.IRole;
   errorHandlerRole: iam.IRole;
   documentDeleteHandlerRole: iam.IRole;
+  adminConfigHandlerRole: iam.IRole;
   environment: string;
   bedrockModelId?: string;
   bedrockRegion?: string;
@@ -41,6 +42,7 @@ export class LambdaFunctionsConstruct extends Construct {
   public readonly errorHandlerFunction: lambda.Function;
   public readonly stepFunctionsTriggerFunction: lambda.Function;
   public readonly documentDeleteHandlerFunction: lambda.Function;
+  public readonly adminConfigHandlerFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionsConstructProps) {
     super(scope, id);
@@ -96,6 +98,7 @@ export class LambdaFunctionsConstruct extends Construct {
         RESULTS_TABLE_NAME: props.resultsTable.tableName,
         BEDROCK_MODEL_ID: bedrockModelId,
         BEDROCK_REGION: bedrockRegion,
+        SSM_MODEL_PARAMETER: '/documentai/bedrock-model-id',
       },
       description: 'Processes documents with Amazon Bedrock - extracts text and generates analysis',
     });
@@ -238,6 +241,25 @@ export class LambdaFunctionsConstruct extends Construct {
 
     cdk.Tags.of(this.stepFunctionsTriggerFunction).add('Function', 'StepFunctionsTrigger');
     cdk.Tags.of(this.stepFunctionsTriggerFunction).add('Component', 'Backend');
+
+    // AdminConfigHandler Lambda Function
+    this.adminConfigHandlerFunction = new lambda.Function(this, 'AdminConfigHandler', {
+      functionName: `AdminConfigHandler-${props.environment}`,
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: 'handler.lambda_handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../backend/admin-config-handler')),
+      role: props.adminConfigHandlerRole,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      environment: {
+        SSM_MODEL_PARAMETER: '/documentai/bedrock-model-id',
+        BEDROCK_LAMBDA_NAME: `BedrockProcessor-${props.environment}`,
+      },
+      description: 'Manages Bedrock model configuration for admin users',
+    });
+
+    cdk.Tags.of(this.adminConfigHandlerFunction).add('Function', 'AdminConfigHandler');
+    cdk.Tags.of(this.adminConfigHandlerFunction).add('Component', 'Backend');
 
     // Output Lambda function ARNs
     new cdk.CfnOutput(cdk.Stack.of(this), 'DocumentUploadHandlerFunctionArn', {

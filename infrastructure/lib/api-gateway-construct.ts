@@ -15,6 +15,7 @@ export interface ApiGatewayConstructProps {
   metricsAggregator: lambda.IFunction;
   exportHandler: lambda.IFunction;
   documentDeleteHandler: lambda.IFunction;
+  adminConfigHandler: lambda.IFunction;
   environment: string;
 }
 
@@ -270,6 +271,13 @@ export class ApiGatewayConstruct extends Construct {
         },
       }
     );
+
+    // GET/PUT /admin/config - Manage Bedrock model configuration (admin only)
+    const adminResource = this.api.root.addResource('admin');
+    const adminConfigResource = adminResource.addResource('config');
+    const adminConfigIntegration = new apigateway.LambdaIntegration(props.adminConfigHandler, { proxy: true });
+    adminConfigResource.addMethod('GET', adminConfigIntegration, { ...authorizedMethodOptions });
+    adminConfigResource.addMethod('PUT', adminConfigIntegration, { ...authorizedMethodOptions });
 
     // GET /health - Health check endpoint (no authorization required)
     const healthResource = this.api.root.addResource('health');

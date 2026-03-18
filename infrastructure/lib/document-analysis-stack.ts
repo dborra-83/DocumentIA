@@ -46,7 +46,7 @@ export class DocumentAnalysisStack extends cdk.Stack {
 
     // IAM Roles for Lambda Functions - Task 2.4
     // Requirements: 9.4
-    const bedrockModelArn = `arn:aws:bedrock:${this.region}::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`;
+    const bedrockModelArn = `arn:aws:bedrock:${this.region}::foundation-model/*`;
     
     const iamRoles = new IamRolesConstruct(this, 'IamRoles', {
       documentsBucket: s3Buckets.documentsBucket,
@@ -72,6 +72,7 @@ export class DocumentAnalysisStack extends cdk.Stack {
       exportHandlerRole: iamRoles.exportHandlerRole,
       errorHandlerRole: iamRoles.errorHandlerRole,
       documentDeleteHandlerRole: iamRoles.documentDeleteHandlerRole,
+      adminConfigHandlerRole: iamRoles.adminConfigHandlerRole,
       environment,
     });
 
@@ -97,6 +98,7 @@ export class DocumentAnalysisStack extends cdk.Stack {
       metricsAggregator: lambdaFunctions.metricsAggregatorFunction,
       exportHandler: lambdaFunctions.exportHandlerFunction,
       documentDeleteHandler: lambdaFunctions.documentDeleteHandlerFunction,
+      adminConfigHandler: lambdaFunctions.adminConfigHandlerFunction,
       environment,
     });
 

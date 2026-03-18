@@ -2,11 +2,23 @@
  * Admin Page - Configuration and white-label settings
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBranding } from '../contexts/BrandingContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { apiService } from '../services/apiService';
 
-type TabType = 'general' | 'branding' | 'limits';
+type TabType = 'general' | 'branding' | 'limits' | 'ai';
+
+interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface AdminConfig {
+  currentModel: string;
+  availableModels: AIModel[];
+}
 
 export const AdminPage: React.FC = () => {
   const { config, updateConfig, resetConfig } = useBranding();
@@ -17,6 +29,41 @@ export const AdminPage: React.FC = () => {
   const [logoPreview, setLogoPreview] = useState<string | null>(config.logoUrl);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // AI Model state
+  const [aiConfig, setAiConfig] = useState<AdminConfig | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isSavingModel, setIsSavingModel] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'ai' && !aiConfig) {
+      setIsLoadingModels(true);
+      apiService.getAdminConfig()
+        .then((data) => {
+          setAiConfig(data);
+          setSelectedModel(data.currentModel);
+        })
+        .catch(() => setSaveMessage(language === 'es' ? 'Error al cargar configuración de IA' : 'Error loading AI configuration'))
+        .finally(() => setIsLoadingModels(false));
+    }
+  }, [activeTab, aiConfig, language]);
+
+  const handleSaveModel = async () => {
+    if (!selectedModel) return;
+    setIsSavingModel(true);
+    setSaveMessage(null);
+    try {
+      await apiService.updateAdminModel(selectedModel);
+      setAiConfig(prev => prev ? { ...prev, currentModel: selectedModel } : prev);
+      setSaveMessage(language === 'es' ? 'Modelo actualizado exitosamente' : 'Model updated successfully');
+      setTimeout(() => setSaveMessage(null), 3000);
+    } catch {
+      setSaveMessage(language === 'es' ? 'Error al actualizar el modelo' : 'Error updating model');
+    } finally {
+      setIsSavingModel(false);
+    }
+  };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -76,6 +123,7 @@ export const AdminPage: React.FC = () => {
     { id: 'general' as TabType, label: t('admin.general'), icon: '⚙️' },
     { id: 'branding' as TabType, label: t('admin.branding'), icon: '🎨' },
     { id: 'limits' as TabType, label: t('admin.limits'), icon: '📊' },
+    { id: 'ai' as TabType, label: language === 'es' ? 'Modelo IA' : 'AI Model', icon: '🤖' },
   ];
 
   return (
@@ -275,9 +323,84 @@ export const AdminPage: React.FC = () => {
               </div>
             )}
 
-            {/* Limits Tab */}
-            {activeTab === 'limits' && (
+            {/* AI Model Tab */}
+            {activeTab === 'ai' && (
               <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-navy-dark mb-4">
+                  {language === 'es' ? 'Modelo de IA (Anthropic / Amazon Bedrock)' : 'AI Model (Anthropic / Amazon Bedrock)'}
+                </h2>
+
+                {isLoadingModels ? (
+                  <div className="flex items-center gap-3 text-gray-500">
+                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    {language === 'es' ? 'Cargando modelos...' : 'Loading models...'}
+                  </div>
+                ) : aiConfig ? (
+                  <>
+                    <div className="p-4 bg-sky-light rounded-lg mb-4">
+                      <p className="text-sm text-gray-700">
+                        <strong>{language === 'es' ? 'Modelo actual:' : 'Current model:'}</strong>{' '}
+                        <span className="font-mono text-bright-blue">{aiConfig.currentModel}</span>
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {language === 'es' ? 'Seleccionar modelo' : 'Select model'}
+                      </label>
+                      <div className="space-y-3">
+                        {aiConfig.availableModels.map((model) => (
+                          <label
+                            key={model.id}
+                            className={`flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                              selectedModel === model.id
+                                ? 'border-bright-blue bg-bright-blue/5'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="aiModel"
+                              value={model.id}
+                              checked={selectedModel === model.id}
+                              onChange={() => setSelectedModel(model.id)}
+                              className="mt-1 accent-bright-blue"
+                            />
+                            <div>
+                              <p className="font-medium text-navy-dark">{model.name}</p>
+                              <p className="text-sm text-gray-500">{model.description}</p>
+                              <p className="text-xs font-mono text-gray-400 mt-1">{model.id}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        onClick={handleSaveModel}
+                        disabled={isSavingModel || selectedModel === aiConfig.currentModel}
+                        className="px-6 py-2 bg-bright-blue text-white rounded-lg hover:bg-turquoise transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSavingModel
+                          ? (language === 'es' ? 'Guardando...' : 'Saving...')
+                          : (language === 'es' ? 'Guardar modelo' : 'Save model')}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-500">
+                    {language === 'es' ? 'No se pudo cargar la configuración.' : 'Could not load configuration.'}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Limits Tab */}
+            {activeTab === 'limits' && (              <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-navy-dark mb-4">{t('admin.limits')}</h2>
                 
                 <div>

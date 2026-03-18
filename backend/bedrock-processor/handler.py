@@ -28,8 +28,9 @@ DOCUMENTS_BUCKET_NAME = os.environ.get('DOCUMENTS_BUCKET_NAME')
 RESULTS_BUCKET_NAME = os.environ.get('RESULTS_BUCKET_NAME')
 DOCUMENTS_TABLE_NAME = os.environ.get('DOCUMENTS_TABLE_NAME')
 RESULTS_TABLE_NAME = os.environ.get('RESULTS_TABLE_NAME')
-BEDROCK_MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-sonnet-20240229-v1:0')
+BEDROCK_MODEL_ID_DEFAULT = os.environ.get('BEDROCK_MODEL_ID', 'anthropic.claude-3-sonnet-20240229-v1:0')
 BEDROCK_REGION = os.environ.get('BEDROCK_REGION', 'us-east-1')
+SSM_MODEL_PARAMETER = os.environ.get('SSM_MODEL_PARAMETER', '/documentai/bedrock-model-id')
 
 # Bedrock configuration
 BEDROCK_TEMPERATURE = 0.7  # Balance between creativity and consistency
@@ -45,6 +46,16 @@ s3_client = boto3.client('s3')
 bedrock_client = boto3.client('bedrock-runtime', region_name=BEDROCK_REGION)
 dynamodb = boto3.resource('dynamodb')
 dynamodb_client = boto3.client('dynamodb')
+ssm_client = boto3.client('ssm')
+
+
+def get_bedrock_model_id() -> str:
+    """Get the current Bedrock model ID from SSM, falling back to env var."""
+    try:
+        response = ssm_client.get_parameter(Name=SSM_MODEL_PARAMETER)
+        return response['Parameter']['Value']
+    except Exception:
+        return BEDROCK_MODEL_ID_DEFAULT
 
 
 def construct_prompt(vertical: str, document_text: str) -> str:
@@ -121,9 +132,9 @@ def invoke_bedrock(prompt: str) -> Tuple[Dict[str, Any], Dict[str, int]]:
     # Retry loop with exponential backoff
     for attempt in range(MAX_RETRY_ATTEMPTS):
         try:
-            # Invoke Bedrock model
+            # Invoke Bedrock model (model ID read dynamically from SSM)
             response = bedrock_client.invoke_model(
-                modelId=BEDROCK_MODEL_ID,
+                modelId=get_bedrock_model_id(),
                 body=json.dumps(request_body)
             )
             
@@ -295,7 +306,7 @@ def store_analysis_results(
         'tokenUsage': token_usage,
         'processingTimeMs': processing_time_ms,
         'analyzedAt': analyzed_at,
-        'bedrockModelId': BEDROCK_MODEL_ID
+        'bedrockModelId': get_bedrock_model_id()
     }
 
     try:
@@ -330,7 +341,7 @@ def store_analysis_results(
                         'keyPoints': {'L': [{'S': point} for point in analysis_result.get('puntos_clave', [])]},
                         'nextSteps': {'L': [{'S': step} for step in analysis_result.get('proximos_pasos', [])]},
                         'analyzedAt': {'S': analyzed_at},
-                        'bedrockModelId': {'S': BEDROCK_MODEL_ID},
+                        'bedrockModelId': {'S': get_bedrock_model_id()},
                         'bedrockRequestId': {'S': 'N/A'},  # Bedrock doesn't provide request ID in response
                         'inputTokens': {'N': str(token_usage['input_tokens'])},
                         'outputTokens': {'N': str(token_usage['output_tokens'])},
@@ -560,7 +571,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         prompt = construct_prompt(vertical, document_text)
 
         # Step 5: Invoke Bedrock API with retry logic
-        print(f"Invoking Bedrock with model: {BEDROCK_MODEL_ID}")
+        print(f"Invoking Bedrock with model: {get_bedrock_model_id()}")
         analysis_result, token_usage = invoke_bedrock(prompt)
 
         # Calculate processing time

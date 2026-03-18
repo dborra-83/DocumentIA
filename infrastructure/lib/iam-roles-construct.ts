@@ -28,6 +28,7 @@ export class IamRolesConstruct extends Construct {
   public readonly exportHandlerRole: iam.Role;
   public readonly errorHandlerRole: iam.Role;
   public readonly documentDeleteHandlerRole: iam.Role;
+  public readonly adminConfigHandlerRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: IamRolesConstructProps) {
     super(scope, id);
@@ -70,7 +71,7 @@ export class IamRolesConstruct extends Construct {
     props.documentsTable.grantReadWriteData(this.bedrockProcessorRole);
     props.resultsTable.grantWriteData(this.bedrockProcessorRole);
 
-    // Grant Bedrock InvokeModel permission
+    // Grant Bedrock InvokeModel permission for all Anthropic Claude models
     this.bedrockProcessorRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -185,6 +186,44 @@ export class IamRolesConstruct extends Construct {
 
     cdk.Tags.of(this.errorHandlerRole).add('Function', 'ErrorHandler');
     cdk.Tags.of(this.errorHandlerRole).add('Component', 'Backend');
+
+    // AdminConfigHandler Role
+    // Permissions: SSM GetParameter/PutParameter, Lambda UpdateFunctionConfiguration
+    this.adminConfigHandlerRole = new iam.Role(this, 'AdminConfigHandlerRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'Role for AdminConfigHandler Lambda - manages Bedrock model configuration',
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+    });
+
+    this.adminConfigHandlerRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['ssm:GetParameter', 'ssm:PutParameter'],
+        resources: [`arn:aws:ssm:*:*:parameter/documentai/*`],
+      })
+    );
+
+    this.adminConfigHandlerRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['lambda:GetFunctionConfiguration', 'lambda:UpdateFunctionConfiguration'],
+        resources: [`arn:aws:lambda:*:*:function:BedrockProcessor-*`],
+      })
+    );
+
+    cdk.Tags.of(this.adminConfigHandlerRole).add('Function', 'AdminConfigHandler');
+    cdk.Tags.of(this.adminConfigHandlerRole).add('Component', 'Backend');
+
+    // Also grant BedrockProcessor SSM read permission
+    this.bedrockProcessorRole.addToPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['ssm:GetParameter'],
+        resources: [`arn:aws:ssm:*:*:parameter/documentai/*`],
+      })
+    );
 
     // Output role ARNs for reference
     new cdk.CfnOutput(this, 'DocumentUploadHandlerRoleArn', {

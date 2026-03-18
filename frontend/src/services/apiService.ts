@@ -95,8 +95,15 @@ class ApiService {
     return response.data
   }
 
-  async uploadFile(url: string, file: File, onProgress?: (progress: number) => void): Promise<void> {
-    await axios.put(url, file, {
+  async getAdminConfig(): Promise<{ currentModel: string; availableModels: Array<{ id: string; name: string; description: string }> }> {
+    return this.get('/admin/config')
+  }
+
+  async updateAdminModel(modelId: string): Promise<{ message: string; modelId: string }> {
+    return this.put('/admin/config', { modelId })
+  }
+
+  async uploadFile(url: string, file: File, onProgress?: (progress: number) => void): Promise<void> {    await axios.put(url, file, {
       headers: {
         'Content-Type': file.type,
       },
